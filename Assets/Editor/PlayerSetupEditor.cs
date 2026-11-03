@@ -24,6 +24,12 @@ namespace EternalSleep.EditorTools
         [MenuItem("Eternal Sleep/Configurar jugador")]
         public static void SetupPlayer()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorUtility.DisplayDialog("Eternal Sleep", "Detén el juego (botón Play) antes de usar esta opción.", "OK");
+                return;
+            }
+
             var existing = Object.FindAnyObjectByType<PlayerMotor>();
             if (existing != null)
             {

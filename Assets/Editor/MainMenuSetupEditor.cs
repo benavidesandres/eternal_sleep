@@ -51,6 +51,12 @@ namespace EternalSleep.EditorTools
         [MenuItem("Eternal Sleep/Crear menú principal")]
         public static void CreateMainMenu()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorUtility.DisplayDialog("Eternal Sleep", "Detén el juego (botón Play) antes de usar esta opción.", "OK");
+                return;
+            }
+
             if (!EnsureTmpEssentials()) return;
 
             var font = GetPixelFont();
@@ -65,8 +71,8 @@ namespace EternalSleep.EditorTools
             var art = CreateArt();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            CreateCamera();
-            var canvas = CreateCanvas();
+            var camera = CreateCamera();
+            var canvas = CreateCanvas(camera);
             CreateBackground(canvas.transform, art);
 
             // Panel principal
@@ -102,6 +108,7 @@ namespace EternalSleep.EditorTools
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddSceneToBuildFirst(ScenePath);
+            PlayFromMenu.Apply();
 
             Debug.Log("[Eternal Sleep] Menú principal creado en " + ScenePath + " y puesto como primera escena del juego.");
         }
@@ -112,15 +119,18 @@ namespace EternalSleep.EditorTools
         {
             if (Resources.Load<TMP_FontAsset>(TmpEssentialFont) != null) return true;
 
-            // Faltan los recursos básicos de TextMeshPro: se importan sin ventanas.
+            // Faltan los recursos básicos de TextMeshPro: se importan sin ventanas
+            // y, cuando termina la importación, se vuelve a crear el menú solo.
+            AssetDatabase.importPackageCompleted += OnTmpImported;
             TMP_PackageResourceImporter.ImportResources(true, false, false);
-            AssetDatabase.Refresh();
-
-            if (Resources.Load<TMP_FontAsset>(TmpEssentialFont) != null) return true;
-            EditorUtility.DisplayDialog("Eternal Sleep",
-                "Se importaron los recursos de texto (TextMeshPro). Vuelve a usar \"Crear menú principal\" cuando termine de cargar.",
-                "OK");
+            Debug.Log("[Eternal Sleep] Importando recursos de texto... el menú se creará al terminar.");
             return false;
+        }
+
+        private static void OnTmpImported(string packageName)
+        {
+            AssetDatabase.importPackageCompleted -= OnTmpImported;
+            EditorApplication.delayCall += CreateMainMenu;
         }
 
         private static TMP_FontAsset GetPixelFont()
@@ -310,7 +320,7 @@ namespace EternalSleep.EditorTools
 
         // ---------- Escena ----------
 
-        private static void CreateCamera()
+        private static Camera CreateCamera()
         {
             var go = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = go.AddComponent<Camera>();
@@ -318,15 +328,19 @@ namespace EternalSleep.EditorTools
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = SkyTop;
             go.transform.position = new Vector3(0, 0, -10);
+            return cam;
         }
 
-        private static Canvas CreateCanvas()
+        private static Canvas CreateCanvas(Camera camera)
         {
             var go = new GameObject("MainMenuCanvas", typeof(RectTransform));
             go.layer = LayerMask.NameToLayer("UI");
 
             var canvas = go.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            // Modo cámara: el menú queda dentro del marco de la cámara también en la vista Scene.
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = camera;
+            canvas.planeDistance = 5f;
             canvas.pixelPerfect = true;
 
             // Resolución baja de referencia para que todo escale en "píxeles gordos".
