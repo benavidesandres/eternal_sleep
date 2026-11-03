@@ -1,0 +1,522 @@
+fileFormatVersion: 2
+guid: ac0a3b096d2dd0845b572cce3bad9641
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3858072417959797303
+    second: saltoprin_0
+  - first:
+      213: 3001173387500197813
+    second: saltoprin_1
+  - first:
+      213: -5008116573253810170
+    second: saltoprin_2
+  - first:
+      213: 6196326004382748149
+    second: saltoprin_3
+  - first:
+      213: 6829321421428647025
+    second: saltoprin_4
+  - first:
+      213: -9168066449373907913
+    second: saltoprin_5
+  - first:
+      213: -3775515389421585100
+    second: saltoprin_6
+  - first:
+      213: -1133598628835261548
+    second: saltoprin_7
+  - first:
+      213: -2485504362578083116
+    second: saltoprin_8
+  - first:
+      213: 4173678075077706270
+    second: saltoprin_9
+  - first:
+      213: -6145704545319387831
+    second: saltoprin_10
+  - first:
+      213: -4748111343229120529
+    second: saltoprin_11
+  - first:
+      213: -2767813235989913306
+    second: saltoprin_12
+  - first:
+      213: -8801287272202955069
+    second: saltoprin_13
+  - first:
+      213: -1780639631714150179
+    second: saltoprin_14
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: saltoprin_0
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 1038
+        width: 235
+        height: 366
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cd16c9a39f557ac0800000000000000
+      internalID: -3858072417959797303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_1
+      rect:
+        serializedVersion: 2
+        x: 825
+        y: 768
+        width: 371
+        height: 404
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b71e478b4f46a920800000000000000
+      internalID: 3001173387500197813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_2
+      rect:
+        serializedVersion: 2
+        x: 1266
+        y: 999
+        width: 247
+        height: 409
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 608c571c2889f7ab0800000000000000
+      internalID: -5008116573253810170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_3
+      rect:
+        serializedVersion: 2
+        x: 1588
+        y: 826
+        width: 349
+        height: 370
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fdcfb3eba5cdf550800000000000000
+      internalID: 6196326004382748149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_4
+      rect:
+        serializedVersion: 2
+        x: 2423
+        y: 1037
+        width: 235
+        height: 366
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 174683546af96ce50800000000000000
+      internalID: 6829321421428647025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_5
+      rect:
+        serializedVersion: 2
+        x: 93
+        y: 556
+        width: 308
+        height: 365
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73434e7832c74c080800000000000000
+      internalID: -9168066449373907913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_6
+      rect:
+        serializedVersion: 2
+        x: 464
+        y: 557
+        width: 329
+        height: 381
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43d7181c1ccaa9bc0800000000000000
+      internalID: -3775515389421585100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_7
+      rect:
+        serializedVersion: 2
+        x: 2001
+        y: 557
+        width: 311
+        height: 357
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 493876a9d06a440f0800000000000000
+      internalID: -1133598628835261548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_8
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 551
+        width: 242
+        height: 371
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d289d473f6b18dd0800000000000000
+      internalID: -2485504362578083116
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_9
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 92
+        width: 237
+        height: 359
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e12c7df9812ebe930800000000000000
+      internalID: 4173678075077706270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_10
+      rect:
+        serializedVersion: 2
+        x: 481
+        y: 91
+        width: 301
+        height: 360
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94dfbb1074216baa0800000000000000
+      internalID: -6145704545319387831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_11
+      rect:
+        serializedVersion: 2
+        x: 857
+        y: 91
+        width: 336
+        height: 359
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fef43d0d3e15b1eb0800000000000000
+      internalID: -4748111343229120529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_12
+      rect:
+        serializedVersion: 2
+        x: 1250
+        y: 91
+        width: 329
+        height: 353
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6216230c680c699d0800000000000000
+      internalID: -2767813235989913306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_13
+      rect:
+        serializedVersion: 2
+        x: 1617
+        y: 91
+        width: 366
+        height: 360
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c61d2e6bdb8bd580800000000000000
+      internalID: -8801287272202955069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: saltoprin_14
+      rect:
+        serializedVersion: 2
+        x: 2075
+        y: 91
+        width: 293
+        height: 360
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd812be60b5e947e0800000000000000
+      internalID: -1780639631714150179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      saltoprin_0: -3858072417959797303
+      saltoprin_1: 3001173387500197813
+      saltoprin_10: -6145704545319387831
+      saltoprin_11: -4748111343229120529
+      saltoprin_12: -2767813235989913306
+      saltoprin_13: -8801287272202955069
+      saltoprin_14: -1780639631714150179
+      saltoprin_2: -5008116573253810170
+      saltoprin_3: 6196326004382748149
+      saltoprin_4: 6829321421428647025
+      saltoprin_5: -9168066449373907913
+      saltoprin_6: -3775515389421585100
+      saltoprin_7: -1133598628835261548
+      saltoprin_8: -2485504362578083116
+      saltoprin_9: 4173678075077706270
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
