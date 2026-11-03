@@ -24,7 +24,7 @@ namespace EternalSleep.EditorTools
         [MenuItem("Eternal Sleep/Configurar jugador")]
         public static void SetupPlayer()
         {
-            var existing = Object.FindFirstObjectByType<PlayerMotor>();
+            var existing = Object.FindAnyObjectByType<PlayerMotor>();
             if (existing != null)
             {
                 if (!EditorUtility.DisplayDialog("Eternal Sleep", "Ya hay un Player en la escena. ¿Reemplazarlo por uno nuevo?", "Reemplazar", "Cancelar"))
