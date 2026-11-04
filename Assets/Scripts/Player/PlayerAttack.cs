@@ -61,8 +61,7 @@ namespace EternalSleep.Player
         {
             GetArea(dir, out Vector2 center, out Vector2 size);
 
-            var filter = new ContactFilter2D { useTriggers = true };
-            filter.NoFilter();
+            var filter = ContactFilter2D.noFilter; // incluye triggers (enemigos, orbes)
             int count = Physics2D.OverlapBox(center, size, 0f, filter, hits);
 
             damaged.Clear();

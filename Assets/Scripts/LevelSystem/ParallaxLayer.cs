@@ -16,6 +16,9 @@ namespace EternalSleep.Level
         [SerializeField] private float drift;
         [Tooltip("Si se repite hacia los lados (desactivar para objetos sueltos como la luna).")]
         [SerializeField] private bool repeat = true;
+        [Tooltip("Posición de la cámara para la que se colocó esta capa. Si no se usa, se toma la del primer frame.")]
+        [SerializeField] private bool useCameraReference;
+        [SerializeField] private Vector2 cameraReference;
 
         private Transform cam;
         private Vector3 startPos;
@@ -36,7 +39,7 @@ namespace EternalSleep.Level
             {
                 cam = Camera.main != null ? Camera.main.transform : null;
                 if (cam == null) return;
-                camStart = cam.position;
+                camStart = useCameraReference ? new Vector3(cameraReference.x, cameraReference.y, cam.position.z) : cam.position;
             }
             Vector3 d = cam.position - camStart;
             float x = startPos.x + d.x * followX + drift * Time.time;
