@@ -167,6 +167,7 @@ namespace EternalSleep.EditorTools
 
         private static string WritePng(string folder, string name, Texture2D tex)
         {
+            tex = AiArt.Apply(name, tex); // si hay arte hecho con IA para este nombre, se usa ese
             Directory.CreateDirectory(folder);
             string path = $"{folder}/{name}.png";
             File.WriteAllBytes(path, tex.EncodeToPNG());
