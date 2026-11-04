@@ -35,6 +35,8 @@ namespace EternalSleep.Player
 
         private float lastGroundedTime = float.NegativeInfinity;
         private float lastJumpPressedTime = float.NegativeInfinity;
+        private float knockbackUntil = float.NegativeInfinity; // mientras dure, no se controla el movimiento
+        private float noJumpCutUntil = float.NegativeInfinity;  // impulsos hacia arriba que no se cortan al soltar salto
 
         public Vector2 Velocity => rb.linearVelocity;
         public bool IsGrounded { get; private set; }
@@ -58,6 +60,31 @@ namespace EternalSleep.Player
         private void OnDisable() => input.JumpPressed -= OnJumpPressed;
 
         private void OnJumpPressed() => lastJumpPressedTime = Time.time;
+
+        /// <summary>Empuja al jugador (por ejemplo al recibir un golpe) y le quita el control un momento.</summary>
+        public void ApplyKnockback(Vector2 velocity, float duration)
+        {
+            rb.linearVelocity = velocity;
+            knockbackUntil = Time.time + duration;
+            noJumpCutUntil = Time.time + duration;
+        }
+
+        /// <summary>Rebote hacia arriba (golpe hacia abajo sobre un enemigo).</summary>
+        public void Bounce(float force)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, force);
+            lastGroundedTime = float.NegativeInfinity;
+            noJumpCutUntil = Time.time + 0.2f;
+        }
+
+        /// <summary>Mueve al jugador a un punto y lo deja quieto.</summary>
+        public void Teleport(Vector2 position)
+        {
+            rb.position = position;
+            transform.position = position;
+            rb.linearVelocity = Vector2.zero;
+            knockbackUntil = float.NegativeInfinity;
+        }
 
         private void FixedUpdate()
         {
@@ -89,6 +116,8 @@ namespace EternalSleep.Player
 
         private void Move()
         {
+            if (Time.time < knockbackUntil) return;
+
             float x = input.Horizontal;
             rb.linearVelocity = new Vector2(x * moveSpeed, rb.linearVelocity.y);
 
@@ -108,7 +137,7 @@ namespace EternalSleep.Player
                 IsGrounded = false;
                 Jumped?.Invoke();
             }
-            else if (!input.JumpHeld && rb.linearVelocity.y > 0f)
+            else if (!input.JumpHeld && rb.linearVelocity.y > 0f && Time.time >= noJumpCutUntil)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
             }
