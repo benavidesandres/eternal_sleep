@@ -25,7 +25,7 @@ namespace EternalSleep.EditorTools
     ///   #  suelo/pared        =  plataforma que se atraviesa desde abajo
     ///   ^  pinchos            P  inicio del jugador
     ///   E  enemigo que camina F  enemigo que vuela
-    ///   G  portal de salida   .  vacío
+    ///   S  vigía que dispara  G  portal de salida   .  vacío
     /// </summary>
     public static class LevelBuilderEditor
     {
@@ -40,8 +40,9 @@ namespace EternalSleep.EditorTools
         {
             public RuleTile Ground;
             public Tile Platform, Spike;
-            public Sprite[] Walker, Flyer, Portal;
-            public Sprite HeartFull, HeartEmpty, Sky, Stars, Moon, HillsFar, HillsNear, Fog;
+            public Sprite[] Walker, Flyer, Shooter, Orb, Portal;
+            public Sprite Alert, HeartFull, HeartEmpty, Sky, Stars, Moon, HillsFar, HillsNear, Fog;
+            public DreamOrb OrbPrefab;
         }
 
         [MenuItem("Eternal Sleep/Construir niveles")]
@@ -128,6 +129,7 @@ namespace EternalSleep.EditorTools
                     case 'P': start = new Vector2(x + 0.5f, y); break;
                     case 'E': CreateWalker(enemies, art, new Vector2(x + 0.5f, y)); break;
                     case 'F': CreateFlyer(enemies, art, new Vector2(x + 0.5f, y + 0.5f)); break;
+                    case 'S': CreateShooter(enemies, art, new Vector2(x + 0.5f, y)); break;
                     case 'G': CreatePortal(art, new Vector2(x + 0.5f, y)); break;
                 }
             }
@@ -187,7 +189,10 @@ namespace EternalSleep.EditorTools
             col.isTrigger = true;
             col.size = new Vector2(0.85f, 0.65f);
             col.offset = new Vector2(0f, 0.33f);
-            go.AddComponent<WalkerEnemy>();
+
+            AddSenses(go, 6f, 0.2f, new Vector2(0f, 0.4f)); // solo ve hacia delante
+            var walker = go.AddComponent<WalkerEnemy>();
+            SetRefs(walker, ("alertIcon", AddAlertIcon(go, art, 1.1f)));
         }
 
         private static void CreateFlyer(Transform parent, Art art, Vector2 center)
@@ -200,7 +205,54 @@ namespace EternalSleep.EditorTools
             var col = go.AddComponent<CircleCollider2D>();
             col.isTrigger = true;
             col.radius = 0.4f;
-            go.AddComponent<FlyerEnemy>();
+
+            AddSenses(go, 6f, -1f, Vector2.zero); // ve en todas direcciones
+            var flyer = go.AddComponent<FlyerEnemy>();
+            SetRefs(flyer, ("alertIcon", AddAlertIcon(go, art, 0.8f)));
+        }
+
+        private static void CreateShooter(Transform parent, Art art, Vector2 feet)
+        {
+            var go = new GameObject("Vigia");
+            go.transform.SetParent(parent, false);
+            go.transform.position = feet;
+            AddEnemyBase(go, art.Shooter, 5);
+
+            var health = new SerializedObject(go.GetComponent<EnemyHealth>());
+            health.FindProperty("maxHealth").intValue = 3;
+            health.ApplyModifiedPropertiesWithoutUndo();
+
+            var col = go.AddComponent<BoxCollider2D>();
+            col.isTrigger = true;
+            col.size = new Vector2(0.8f, 0.9f);
+            col.offset = new Vector2(0f, 0.45f);
+
+            AddSenses(go, 8f, -1f, new Vector2(0f, 0.5f));
+            var shooter = go.AddComponent<ShooterEnemy>();
+            SetRefs(shooter, ("projectilePrefab", art.OrbPrefab), ("alertIcon", AddAlertIcon(go, art, 1.3f)));
+        }
+
+        private static void AddSenses(GameObject go, float range, float minFacingDot, Vector2 eye)
+        {
+            var senses = go.AddComponent<EnemySenses>();
+            var so = new SerializedObject(senses);
+            so.FindProperty("viewRange").floatValue = range;
+            so.FindProperty("minFacingDot").floatValue = minFacingDot;
+            so.FindProperty("eyeOffset").vector2Value = eye;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>Icono "!" sobre la cabeza del enemigo (oculto hasta que ve al jugador).</summary>
+        private static GameObject AddAlertIcon(GameObject enemy, Art art, float height)
+        {
+            var icon = new GameObject("Alerta");
+            icon.transform.SetParent(enemy.transform, false);
+            icon.transform.localPosition = new Vector3(0f, height, 0f);
+            var sr = icon.AddComponent<SpriteRenderer>();
+            sr.sprite = art.Alert;
+            sr.sortingOrder = 20;
+            icon.SetActive(false);
+            return icon;
         }
 
         /// <summary>Lo que comparten todos los enemigos: sprite animado, física sin gravedad, vida y daño al tocar.</summary>
@@ -406,6 +458,22 @@ namespace EternalSleep.EditorTools
                 .Select(i => PixelArt.SaveSprite(ArtFolder, "portal_" + i, PortalTexture(i), 0, TilePPU, bottomCenter))
                 .ToArray();
 
+            a.Shooter = new[]
+            {
+                PixelArt.SaveSprite(ArtFolder, "vigia_0", ShooterTexture(0), 0, TilePPU, bottomCenter),
+                PixelArt.SaveSprite(ArtFolder, "vigia_1", ShooterTexture(1), 0, TilePPU, bottomCenter),
+            };
+            a.Orb = new[]
+            {
+                PixelArt.SaveSprite(ArtFolder, "orbe_0", OrbTexture(0), 0, TilePPU),
+                PixelArt.SaveSprite(ArtFolder, "orbe_1", OrbTexture(1), 0, TilePPU),
+            };
+            a.Alert = PixelArt.SaveSprite(ArtFolder, "alerta", PixelArt.FromPattern(new[]
+            {
+                ".o.", "oyo", "oyo", "oyo", "oyo", ".o.", "...", ".o.", "oyo", ".o.",
+            }, ('o', PixelArt.Ink), ('y', PixelArt.Gold)), 0, TilePPU, bottomCenter);
+            a.OrbPrefab = SaveOrbPrefab(a.Orb);
+
             a.HeartFull = PixelArt.SaveSprite(ArtFolder, "heart_full", HeartTexture(true));
             a.HeartEmpty = PixelArt.SaveSprite(ArtFolder, "heart_empty", HeartTexture(false));
 
@@ -418,6 +486,29 @@ namespace EternalSleep.EditorTools
                 HillsTexture(48, 34f, 4f, 2f, 2f, PixelArt.Deep, PixelArt.Base), 0, TilePPU);
             a.Fog = PixelArt.SaveSprite(ArtFolder, "bg_fog", PixelArt.Fog(), 0, TilePPU);
             return a;
+        }
+
+        /// <summary>Prefab del orbe que dispara el Vigía (Assets/Levels/Art/Prefabs/DreamOrb.prefab).</summary>
+        private static DreamOrb SaveOrbPrefab(Sprite[] frames)
+        {
+            string folder = ArtFolder + "/Prefabs";
+            Directory.CreateDirectory(folder);
+
+            var go = new GameObject("DreamOrb");
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = frames[0];
+            sr.sortingOrder = 15;
+            SetRefs(go.AddComponent<SpriteFlipbook>(), ("frames", frames));
+            var rb = go.AddComponent<Rigidbody2D>();
+            rb.gravityScale = 0f;
+            var col = go.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+            col.radius = 0.2f;
+            go.AddComponent<DreamOrb>();
+
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, folder + "/DreamOrb.prefab");
+            Object.DestroyImmediate(go);
+            return prefab.GetComponent<DreamOrb>();
         }
 
         private static Tile SaveTile(string name, Sprite sprite, Tile.ColliderType collider)
@@ -598,6 +689,46 @@ namespace EternalSleep.EditorTools
                 int x = Mathf.RoundToInt(7.5f + Mathf.Cos(a) * s * 7f);
                 int y = Mathf.RoundToInt(15.5f + Mathf.Sin(a) * s * 15f);
                 if (x >= 0 && x < w && y >= 0 && y < h) t.SetPixel(x, y, s < 0.35f ? PixelArt.Moon : PixelArt.Soft);
+            }
+            return t;
+        }
+
+        /// <summary>"Vigía": un ojo grande sobre un pedestal. El cuadro 1 parpadea.</summary>
+        private static Texture2D ShooterTexture(int frame)
+        {
+            var t = PixelArt.Solid(16, 16, Color.clear);
+            // pedestal
+            for (int x = 4; x < 12; x++)
+            for (int y = 0; y < 5; y++)
+                t.SetPixel(x, y, x == 4 || x == 11 || y == 4 ? PixelArt.Ink : PixelArt.Base);
+            // ojo
+            for (int x = 0; x < 16; x++)
+            for (int y = 4; y < 16; y++)
+            {
+                float r = Mathf.Sqrt(Sq((x - 7.5f) / 6.5f) + Sq((y - 10f) / 5.5f));
+                if (r > 1f) continue;
+                Color c = r > 0.85f ? PixelArt.Ink : PixelArt.Moon;
+                if (frame == 1 && r <= 0.85f) c = y > 10 ? PixelArt.Mid : PixelArt.Moon; // párpado medio cerrado
+                t.SetPixel(x, y, c);
+            }
+            // iris y pupila (mira a la izquierda; el script lo voltea)
+            for (int x = 3; x < 8; x++)
+            for (int y = 8; y < 12; y++)
+                t.SetPixel(x, y, (x == 4 || x == 5) && (y == 9 || y == 10) ? PixelArt.Ink : PixelArt.Rose);
+            return t;
+        }
+
+        /// <summary>Orbe de sueño: bolita brillante que late entre los dos cuadros.</summary>
+        private static Texture2D OrbTexture(int frame)
+        {
+            var t = PixelArt.Solid(8, 8, Color.clear);
+            float outer = frame == 0 ? 3.6f : 3.1f;
+            for (int x = 0; x < 8; x++)
+            for (int y = 0; y < 8; y++)
+            {
+                float d = PixelArt.Dist(x, y, 3.5f, 3.5f);
+                if (d > outer) continue;
+                t.SetPixel(x, y, d < 1.5f ? Color.white : d < 2.6f ? PixelArt.Rose : PixelArt.WithAlpha(PixelArt.Lilac, 0.7f));
             }
             return t;
         }
