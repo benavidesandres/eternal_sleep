@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.IO;
 using System.Linq;
+using EternalSleep.CameraSystem;
 using EternalSleep.Player;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -20,6 +21,7 @@ namespace EternalSleep.EditorTools
         private const string AnimFolder = "Assets/sprites/player/animations";
         private const string ControllerPath = AnimFolder + "/Player.controller";
         private const string GroundLayerName = "Ground";
+        private const string GameScenePath = "Assets/Scenes/SampleScene.unity";
 
         [MenuItem("Eternal Sleep/Configurar jugador")]
         public static void SetupPlayer()
@@ -28,6 +30,13 @@ namespace EternalSleep.EditorTools
             {
                 EditorUtility.DisplayDialog("Eternal Sleep", "Detén el juego (botón Play) antes de usar esta opción.", "OK");
                 return;
+            }
+
+            // El jugador siempre va en la escena del juego (la que carga el botón Jugar).
+            if (EditorSceneManager.GetActiveScene().path != GameScenePath)
+            {
+                if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+                EditorSceneManager.OpenScene(GameScenePath);
             }
 
             var existing = Object.FindAnyObjectByType<PlayerMotor>();
@@ -44,11 +53,14 @@ namespace EternalSleep.EditorTools
             var controller = BuildController();
             if (controller == null) return;
 
-            CreatePlayer(controller, groundLayer);
+            var player = CreatePlayer(controller, groundLayer);
             if (GameObject.Find("Ground") == null) CreateGround(groundLayer);
+            SetupCameraFollow(player.transform);
 
-            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-            Debug.Log("[Eternal Sleep] Jugador configurado. Guarda la escena con Ctrl+S y pulsa Play.");
+            var scene = EditorSceneManager.GetActiveScene();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("[Eternal Sleep] Jugador configurado y guardado en " + GameScenePath + ". Pulsa Play.");
         }
 
         // ---------- Animator Controller ----------
@@ -56,7 +68,7 @@ namespace EternalSleep.EditorTools
         private static AnimationClip FindClip(string name) =>
             AssetDatabase.LoadAssetAtPath<AnimationClip>($"{AnimFolder}/{name}.anim");
 
-        private static AnimatorController BuildController()
+        internal static AnimatorController BuildController()
         {
             string[] names = { "idle", "run", "jump_up", "fall", "land", "attack_forward", "attack_up", "attack_down" };
             var clips = names.ToDictionary(n => n, FindClip);
@@ -154,7 +166,7 @@ namespace EternalSleep.EditorTools
 
         // ---------- Capas ----------
 
-        private static int EnsureLayer(string layerName)
+        internal static int EnsureLayer(string layerName)
         {
             int existing = LayerMask.NameToLayer(layerName);
             if (existing >= 0) return existing;
@@ -178,7 +190,20 @@ namespace EternalSleep.EditorTools
 
         // ---------- Objetos de escena ----------
 
-        private static void CreatePlayer(AnimatorController controller, int groundLayer)
+        private static void SetupCameraFollow(Transform player)
+        {
+            var cam = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
+            if (cam == null) return;
+
+            var follow = cam.GetComponent<CameraFollow2D>();
+            if (follow == null) follow = Undo.AddComponent<CameraFollow2D>(cam.gameObject);
+
+            var so = new SerializedObject(follow);
+            so.FindProperty("target").objectReferenceValue = player;
+            so.ApplyModifiedProperties();
+        }
+
+        internal static GameObject CreatePlayer(AnimatorController controller, int groundLayer)
         {
             var go = new GameObject("Player");
             Undo.RegisterCreatedObjectUndo(go, "Crear Player");
@@ -217,6 +242,7 @@ namespace EternalSleep.EditorTools
             soAnim.ApplyModifiedProperties();
 
             Selection.activeGameObject = go;
+            return go;
         }
 
         private static void CreateGround(int groundLayer)
