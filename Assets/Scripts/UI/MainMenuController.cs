@@ -10,7 +10,8 @@ namespace EternalSleep.UI
     /// </summary>
     public class MainMenuController : MonoBehaviour
     {
-        [SerializeField] private string gameScene = "SampleScene";
+        [Tooltip("Posición en Build Settings del primer nivel (0 es este menú).")]
+        [SerializeField] private int firstLevelBuildIndex = 1;
         [SerializeField] private GameObject mainPanel;
         [SerializeField] private GameObject optionsPanel;
         [SerializeField] private GameObject mainFirstSelected;
@@ -30,7 +31,7 @@ namespace EternalSleep.UI
         public void Play()
         {
             GameSettings.Save();
-            SceneManager.LoadScene(gameScene);
+            SceneManager.LoadScene(firstLevelBuildIndex);
         }
 
         public void OpenOptions()
