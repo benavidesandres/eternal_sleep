@@ -28,18 +28,18 @@ namespace EternalSleep.EditorTools
         private const string TmpEssentialFont = "Fonts & Materials/LiberationSans SDF";
 
         // Paleta "noche profunda"
-        private static readonly Color Ink = Hex("#0B0814");
-        private static readonly Color SkyTop = Hex("#07050D");
-        private static readonly Color SkyBottom = Hex("#2A1F45");
-        private static readonly Color Deep = Hex("#1A1428");
-        private static readonly Color Base = Hex("#2A2140");
-        private static readonly Color Mid = Hex("#43356A");
-        private static readonly Color Hover = Hex("#4A3A78");
-        private static readonly Color Soft = Hex("#6B5A9E");
-        private static readonly Color Lilac = Hex("#B9A8F0");
-        private static readonly Color Pale = Hex("#D9CCFF");
-        private static readonly Color Moon = Hex("#F2ECFF");
-        private static readonly Color Gold = Hex("#FFE38A");
+        private static readonly Color Ink = PixelArt.Ink;
+        private static readonly Color SkyTop = PixelArt.SkyTop;
+        private static readonly Color SkyBottom = PixelArt.SkyBottom;
+        private static readonly Color Deep = PixelArt.Deep;
+        private static readonly Color Base = PixelArt.Base;
+        private static readonly Color Mid = PixelArt.Mid;
+        private static readonly Color Hover = PixelArt.Hover;
+        private static readonly Color Soft = PixelArt.Soft;
+        private static readonly Color Lilac = PixelArt.Lilac;
+        private static readonly Color Pale = PixelArt.Pale;
+        private static readonly Color Moon = PixelArt.Moon;
+        private static readonly Color Gold = PixelArt.Gold;
 
         private class Art
         {
@@ -182,26 +182,6 @@ namespace EternalSleep.EditorTools
             return art;
         }
 
-        /// <summary>Caja con esquinas recortadas: borde, relleno, luz arriba y sombra abajo.</summary>
-        private static Texture2D Box(int w, int h, Color outline, Color fill, Color light, Color shadow)
-        {
-            var t = Solid(w, h, Color.clear);
-            for (int x = 0; x < w; x++)
-            for (int y = 0; y < h; y++)
-            {
-                bool cornerX = x == 0 || x == w - 1;
-                bool cornerY = y == 0 || y == h - 1;
-                if (cornerX && cornerY) continue; // esquina redondeada
-                Color c;
-                if (cornerX || cornerY) c = outline;
-                else if (y == h - 2) c = light;
-                else if (y == 1) c = shadow;
-                else c = fill;
-                t.SetPixel(x, y, c);
-            }
-            return t;
-        }
-
         private static Texture2D ToggleBoxTexture()
         {
             var t = Box(14, 14, Ink, Color.white, Color.white, Color.white);
@@ -211,112 +191,18 @@ namespace EternalSleep.EditorTools
             return t;
         }
 
-        private static Texture2D StarTexture()
-        {
-            var t = Solid(3, 3, Color.clear);
-            t.SetPixel(1, 1, Color.white);
-            var arm = WithAlpha(Color.white, 0.5f);
-            t.SetPixel(0, 1, arm); t.SetPixel(2, 1, arm); t.SetPixel(1, 0, arm); t.SetPixel(1, 2, arm);
-            return t;
-        }
-
-        private static Texture2D MoonTexture()
-        {
-            // Luna creciente: un círculo menos otro desplazado.
-            const int size = 24;
-            var t = Solid(size, size, Color.clear);
-            for (int x = 0; x < size; x++)
-            for (int y = 0; y < size; y++)
-            {
-                bool inA = Dist(x, y, 11.5f, 11.5f) <= 10.5f;
-                bool inB = Dist(x, y, 16.5f, 14.5f) <= 9f;
-                if (!inA || inB) continue;
-                bool edge = Dist(x, y, 11.5f, 11.5f) > 9.5f || Dist(x, y, 16.5f, 14.5f) <= 10f;
-                t.SetPixel(x, y, edge ? Lilac : Moon);
-            }
-            return t;
-        }
-
-        private static Texture2D SkyTexture()
-        {
-            // Degradado en bandas (look pixel art), de abajo hacia arriba.
-            const int h = 45, bands = 9;
-            var t = Solid(1, h, Color.clear);
-            for (int y = 0; y < h; y++)
-            {
-                float step = Mathf.Floor((float)y / h * bands) / (bands - 1);
-                t.SetPixel(0, y, Color.Lerp(SkyBottom, SkyTop, step));
-            }
-            return t;
-        }
-
-        private static Texture2D FogTexture()
-        {
-            // Niebla que se repite de lado a lado sin cortes.
-            const int w = 128, h = 64;
-            const float r = 3f;
-            var t = Solid(w, h, Color.clear);
-            for (int x = 0; x < w; x++)
-            {
-                float a = x / (float)w * Mathf.PI * 2f;
-                float u = Mathf.Cos(a) * r + 10f, v = Mathf.Sin(a) * r + 10f;
-                for (int y = 0; y < h; y++)
-                {
-                    float n = (Mathf.PerlinNoise(u + y * 0.06f, v) + 0.5f * Mathf.PerlinNoise(u * 2f, v * 2f + y * 0.12f)) / 1.5f;
-                    float alpha = Mathf.Clamp01((n - 0.35f) * 2.2f) * (1f - y / (float)(h - 1));
-                    alpha = Mathf.Round(alpha * 4f) / 4f; // 4 niveles de opacidad
-                    if (alpha > 0f) t.SetPixel(x, y, WithAlpha(Lilac, alpha));
-                }
-            }
-            return t;
-        }
-
-        private static Texture2D Solid(int w, int h, Color c)
-        {
-            var t = new Texture2D(w, h, TextureFormat.RGBA32, false);
-            t.SetPixels(Enumerable.Repeat(c, w * h).ToArray());
-            return t;
-        }
-
-        private static Sprite SaveSprite(string name, Texture2D tex, int border)
-        {
-            string path = WritePng(name, tex);
-            var imp = (TextureImporter)AssetImporter.GetAtPath(path);
-            imp.textureType = TextureImporterType.Sprite;
-            imp.spriteImportMode = SpriteImportMode.Single;
-            imp.spritePixelsPerUnit = 100;
-            imp.spriteBorder = new Vector4(border, border, border, border);
-            ApplyPixelSettings(imp, TextureWrapMode.Clamp);
-            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
-        }
-
-        private static Texture2D SaveTexture(string name, Texture2D tex, TextureWrapMode wrap)
-        {
-            string path = WritePng(name, tex);
-            var imp = (TextureImporter)AssetImporter.GetAtPath(path);
-            imp.textureType = TextureImporterType.Default;
-            ApplyPixelSettings(imp, wrap);
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
-
-        private static string WritePng(string name, Texture2D tex)
-        {
-            string path = $"{ArtFolder}/{name}.png";
-            File.WriteAllBytes(path, tex.EncodeToPNG());
-            Object.DestroyImmediate(tex);
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-            return path;
-        }
-
-        private static void ApplyPixelSettings(TextureImporter imp, TextureWrapMode wrap)
-        {
-            imp.filterMode = FilterMode.Point;
-            imp.textureCompression = TextureImporterCompression.Uncompressed;
-            imp.mipmapEnabled = false;
-            imp.alphaIsTransparency = true;
-            imp.wrapMode = wrap;
-            imp.SaveAndReimport();
-        }
+        // Atajos a las herramientas compartidas de PixelArt.
+        private static Texture2D MoonTexture() => PixelArt.CrescentMoon();
+        private static Texture2D Box(int w, int h, Color outline, Color fill, Color light, Color shadow) =>
+            PixelArt.Box(w, h, outline, fill, light, shadow);
+        private static Texture2D StarTexture() => PixelArt.Star();
+        private static Texture2D SkyTexture() => PixelArt.Sky();
+        private static Texture2D FogTexture() => PixelArt.Fog();
+        private static Texture2D Solid(int w, int h, Color c) => PixelArt.Solid(w, h, c);
+        private static Sprite SaveSprite(string name, Texture2D tex, int border) =>
+            PixelArt.SaveSprite(ArtFolder, name, tex, border);
+        private static Texture2D SaveTexture(string name, Texture2D tex, TextureWrapMode wrap) =>
+            PixelArt.SaveTexture(ArtFolder, name, tex, wrap);
 
         // ---------- Escena ----------
 
