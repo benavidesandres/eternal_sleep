@@ -74,13 +74,14 @@ namespace EternalSleep.EditorTools
             try
             {
                 EditorUtility.DisplayProgressBar("Eternal Sleep", "Dibujando el arte de los niveles...", 0f);
-                var art = CreateArt();
+                var artPaths = ArtPaths(CreateArt());
+                string controllerPath = AssetDatabase.GetAssetPath(controller);
 
                 for (int i = 0; i < files.Length; i++)
                 {
                     EditorUtility.DisplayProgressBar("Eternal Sleep",
                         "Construyendo " + Path.GetFileNameWithoutExtension(files[i]), (i + 1f) / (files.Length + 1f));
-                    scenes.Add(BuildLevel(files[i], art, controller, groundLayer));
+                    scenes.Add(BuildLevel(files[i], artPaths, controllerPath, groundLayer));
                 }
             }
             finally
@@ -96,14 +97,17 @@ namespace EternalSleep.EditorTools
 
         // ---------- Escena de un nivel ----------
 
-        private static string BuildLevel(string mapPath, Art art, AnimatorController controller, int groundLayer)
+        private static string BuildLevel(string mapPath, Dictionary<string, string[]> paths, string controllerPath, int groundLayer)
         {
             var lines = File.ReadAllLines(mapPath).Select(l => l.TrimEnd()).Where(l => l.Length > 0).ToArray();
             int height = lines.Length;
             int width = lines.Max(l => l.Length);
             string levelName = Path.GetFileNameWithoutExtension(mapPath);
 
+            // Abrir una escena nueva descarga de memoria el arte creado antes; se vuelve a cargar desde disco.
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var art = ReloadArt(paths);
+            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
 
             // Tilemaps
             var grid = new GameObject("Grid").AddComponent<Grid>();
@@ -160,13 +164,62 @@ namespace EternalSleep.EditorTools
             CreateLevelManager(bounds);
             CreateLight();
             var cam = CreateCamera(player.transform, start, bounds);
-            CreateBackground(art, cam, width);
+            CreateBackground(art, cam, bounds, levelName);
             CreateHud(art);
+
+            if (ground.GetUsedTilesCount() == 0)
+                Debug.LogError($"[Eternal Sleep] {levelName}: el suelo quedó vacío (¿falta el tile de suelo?).");
 
             Directory.CreateDirectory(ScenesFolder);
             string scenePath = $"{ScenesFolder}/{levelName}.unity";
             EditorSceneManager.SaveScene(scene, scenePath);
             return scenePath;
+        }
+
+        /// <summary>Guarda la ruta en disco de cada asset del arte (campo → rutas).</summary>
+        private static Dictionary<string, string[]> ArtPaths(Art art)
+        {
+            var result = new Dictionary<string, string[]>();
+            foreach (var field in typeof(Art).GetFields())
+            {
+                object value = field.GetValue(art);
+                if (value is Object[] array)
+                    result[field.Name] = array.Select(AssetDatabase.GetAssetPath).ToArray();
+                else if (value is Object obj && obj != null)
+                    result[field.Name] = new[] { AssetDatabase.GetAssetPath(obj) };
+            }
+            return result;
+        }
+
+        /// <summary>Vuelve a cargar el arte desde disco usando las rutas guardadas.</summary>
+        private static Art ReloadArt(Dictionary<string, string[]> paths)
+        {
+            var art = new Art();
+            foreach (var field in typeof(Art).GetFields())
+            {
+                if (!paths.TryGetValue(field.Name, out var p)) continue;
+                var type = field.FieldType;
+
+                if (type.IsArray)
+                {
+                    var elementType = type.GetElementType();
+                    var array = System.Array.CreateInstance(elementType, p.Length);
+                    for (int i = 0; i < p.Length; i++) array.SetValue(Load(p[i], elementType), i);
+                    field.SetValue(art, array);
+                }
+                else field.SetValue(art, Load(p[0], type));
+            }
+            return art;
+        }
+
+        private static Object Load(string path, System.Type type)
+        {
+            if (typeof(Component).IsAssignableFrom(type)) // prefab: se carga el GameObject y se toma el componente
+            {
+                var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                return go != null ? go.GetComponent(type) : null;
+            }
+            return AssetDatabase.LoadAssetAtPath(path, type);
         }
 
         private static Tilemap NewTilemap(string name, Transform parent, int sortingOrder)
@@ -336,20 +389,47 @@ namespace EternalSleep.EditorTools
             return cam;
         }
 
-        private static void CreateBackground(Art art, Camera cam, int levelWidth)
+        private static void CreateBackground(Art art, Camera cam, Rect bounds, string levelName)
         {
             var root = new GameObject("Background").transform;
-            Vector3 c = cam.transform.position;
             float span = Mathf.Max(60f, cam.orthographicSize * 2f * 16f / 9f * 2f);
 
-            // Cielo pegado a la cámara (cubre toda la vista).
-            var sky = AddLayer(root, "Sky", art.Sky, -100, new Vector2(c.x, c.y), 1f, 1f, false);
-            sky.transform.localScale = new Vector3(span / art.Sky.bounds.size.x, 16f / art.Sky.bounds.size.y, 1f);
+            // Dónde empieza realmente la cámara (CameraFollow2D la limita al nivel).
+            float viewH = cam.orthographicSize * 2f, viewW = viewH * 16f / 9f;
+            Vector3 c = cam.transform.position;
+            float camMinX = bounds.xMin + viewW / 2f, camMaxX = Mathf.Max(camMinX, bounds.xMax - viewW / 2f);
+            c.x = Mathf.Clamp(c.x, camMinX, camMaxX);
+            if (bounds.height > viewH) c.y = Mathf.Clamp(c.y, bounds.yMin + viewH / 2f, bounds.yMax - viewH / 2f);
+            layerCameraReference = c; // todas las capas se colocan para esta posición de cámara
 
-            Tiled(AddLayer(root, "Stars", art.Stars, -90, new Vector2(c.x, c.y + 1f), 0.05f, 0.95f, true), span, 16f);
-            AddLayer(root, "Moon", art.Moon, -85, new Vector2(c.x + 6f, c.y + 3.5f), 0.02f, 0.97f, false);
-            Tiled(AddLayer(root, "HillsFar", art.HillsFar, -80, new Vector2(c.x, 4.5f), 0.25f, 0.6f, true), span, 4f);
-            Tiled(AddLayer(root, "HillsNear", art.HillsNear, -70, new Vector2(c.x, 3f), 0.5f, 0.75f, true), span, 3f);
+            var image = LoadLevelBackground(levelName);
+            if (image != null)
+            {
+                // Fondo ilustrado del nivel: se mueve un poco más lento que la cámara.
+                const float followX = 0.85f;
+                float travel = camMaxX - camMinX;
+                float needW = viewW * 1.35f + travel * (1f - followX); // 1.35: margen para pantallas más anchas
+                float needH = viewH * 1.1f;
+                float s = Mathf.Max(needW / image.bounds.size.x, needH / image.bounds.size.y);
+
+                var bg = AddLayer(root, "LevelBackground", image, -100,
+                    new Vector2(c.x + travel * (1f - followX) / 2f, c.y), followX, 1f, false);
+                bg.transform.localScale = new Vector3(s, s, 1f);
+                bg.color = new Color(0.72f, 0.72f, 0.8f); // un poco más oscuro para que resalten el jugador y los enemigos
+            }
+            else
+            {
+                // Cielo pegado a la cámara (cubre toda la vista).
+                var sky = AddLayer(root, "Sky", art.Sky, -100, new Vector2(c.x, c.y), 1f, 1f, false);
+                sky.transform.localScale = new Vector3(span / art.Sky.bounds.size.x, 16f / art.Sky.bounds.size.y, 1f);
+
+                Tiled(AddLayer(root, "Stars", art.Stars, -90, new Vector2(c.x, c.y + 1f), 0.05f, 0.95f, true), span, 16f);
+                AddLayer(root, "Moon", art.Moon, -85, new Vector2(c.x + 6f, c.y + 3.5f), 0.02f, 0.97f, false);
+                Tiled(AddLayer(root, "HillsFar", art.HillsFar, -80, new Vector2(c.x, 4.5f), 0.25f, 0.6f, true), span, 4f);
+                Tiled(AddLayer(root, "HillsNear", art.HillsNear, -70, new Vector2(c.x, 3f), 0.5f, 0.75f, true), span, 3f);
+            }
+
+            if (image != null) return; // el fondo ilustrado ya trae su niebla
 
             var fog = AddLayer(root, "Fog", art.Fog, -60, new Vector2(c.x, 3.5f), 0.7f, 0.8f, true);
             Tiled(fog, span, 4f);
@@ -358,6 +438,33 @@ namespace EternalSleep.EditorTools
             so.FindProperty("drift").floatValue = 0.3f;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
+
+        /// <summary>Busca Assets/Levels/Backgrounds/&lt;nivel&gt;.png/.jpg y lo prepara como sprite.</summary>
+        private static Sprite LoadLevelBackground(string levelName)
+        {
+            foreach (var ext in new[] { ".png", ".jpg", ".jpeg" })
+            {
+                string path = $"{LevelsFolder}/Backgrounds/{levelName}{ext}";
+                if (!File.Exists(path)) continue;
+
+                var imp = (TextureImporter)AssetImporter.GetAtPath(path);
+                if (imp == null) { AssetDatabase.ImportAsset(path); imp = (TextureImporter)AssetImporter.GetAtPath(path); }
+                if (imp == null) continue;
+
+                imp.textureType = TextureImporterType.Sprite;
+                imp.spriteImportMode = SpriteImportMode.Single;
+                imp.spritePixelsPerUnit = 100;
+                imp.mipmapEnabled = false;
+                imp.filterMode = FilterMode.Bilinear;
+                imp.maxTextureSize = 4096;
+                imp.textureCompression = TextureImporterCompression.CompressedHQ;
+                imp.SaveAndReimport();
+                return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            }
+            return null;
+        }
+
+        private static Vector2 layerCameraReference;
 
         private static SpriteRenderer AddLayer(Transform parent, string name, Sprite sprite, int order,
             Vector2 position, float followX, float followY, bool repeat)
@@ -374,6 +481,8 @@ namespace EternalSleep.EditorTools
             so.FindProperty("followX").floatValue = followX;
             so.FindProperty("followY").floatValue = followY;
             so.FindProperty("repeat").boolValue = repeat;
+            so.FindProperty("useCameraReference").boolValue = true;
+            so.FindProperty("cameraReference").vector2Value = layerCameraReference;
             so.ApplyModifiedPropertiesWithoutUndo();
             return sr;
         }

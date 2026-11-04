@@ -135,12 +135,13 @@ namespace EternalSleep.EditorTools
         public static Sprite SaveSprite(string folder, string name, Texture2D tex, int border = 0,
             float pixelsPerUnit = 100, Vector2? pivot = null)
         {
-            string path = WritePng(folder, name, tex);
+            string path = WritePng(folder, name, tex, out int scale);
             var imp = (TextureImporter)AssetImporter.GetAtPath(path);
             imp.textureType = TextureImporterType.Sprite;
             imp.spriteImportMode = SpriteImportMode.Single;
-            imp.spritePixelsPerUnit = pixelsPerUnit;
-            imp.spriteBorder = new Vector4(border, border, border, border);
+            imp.spritePixelsPerUnit = pixelsPerUnit * scale; // el arte IA tiene más píxeles pero ocupa lo mismo
+            int b = border * scale;
+            imp.spriteBorder = new Vector4(b, b, b, b);
 
             var settings = new TextureImporterSettings();
             imp.ReadTextureSettings(settings);
@@ -158,16 +159,16 @@ namespace EternalSleep.EditorTools
 
         public static Texture2D SaveTexture(string folder, string name, Texture2D tex, TextureWrapMode wrap)
         {
-            string path = WritePng(folder, name, tex);
+            string path = WritePng(folder, name, tex, out _);
             var imp = (TextureImporter)AssetImporter.GetAtPath(path);
             imp.textureType = TextureImporterType.Default;
             ApplyPixelSettings(imp, wrap);
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        private static string WritePng(string folder, string name, Texture2D tex)
+        private static string WritePng(string folder, string name, Texture2D tex, out int scale)
         {
-            tex = AiArt.Apply(name, tex); // si hay arte hecho con IA para este nombre, se usa ese
+            tex = AiArt.Apply(name, tex, out scale); // si hay arte hecho con IA para este nombre, se usa ese
             Directory.CreateDirectory(folder);
             string path = $"{folder}/{name}.png";
             File.WriteAllBytes(path, tex.EncodeToPNG());

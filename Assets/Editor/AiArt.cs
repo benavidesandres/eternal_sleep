@@ -21,6 +21,9 @@ namespace EternalSleep.EditorTools
     {
         public const string Folder = "ArtIA";
 
+        /// <summary>El arte IA se guarda con más resolución que el dibujo generado (4× = 64 px por casilla).</summary>
+        public const int DetailScale = 4;
+
         // Texturas que ocupan todo el cuadro y se repiten (no se les quita el fondo ni se recortan).
         private static readonly HashSet<string> FullFrame = new HashSet<string>
         {
@@ -48,8 +51,9 @@ namespace EternalSleep.EditorTools
         }
 
         /// <summary>Devuelve el arte IA adaptado si existe; si no, el dibujo generado tal cual.</summary>
-        public static Texture2D Apply(string name, Texture2D generated)
+        public static Texture2D Apply(string name, Texture2D generated, out int scale)
         {
+            scale = 1;
             string path = Path.Combine(Folder, name + ".png");
             if (!File.Exists(path)) return generated;
 
@@ -61,7 +65,8 @@ namespace EternalSleep.EditorTools
                 return generated;
             }
 
-            int w = generated.width, h = generated.height;
+            scale = DetailScale;
+            int w = generated.width * scale, h = generated.height * scale;
             bool fullFrame = FullFrame.Contains(name);
             bool soft = SoftAlpha.Contains(name);
 
@@ -77,9 +82,9 @@ namespace EternalSleep.EditorTools
             else
             {
                 // Mantiene la proporción y centra (o apoya abajo).
-                float scale = Mathf.Min((float)w / content.width, (float)h / content.height);
-                int dw = Mathf.Max(1, Mathf.RoundToInt(content.width * scale));
-                int dh = Mathf.Max(1, Mathf.RoundToInt(content.height * scale));
+                float fit = Mathf.Min((float)w / content.width, (float)h / content.height);
+                int dw = Mathf.Max(1, Mathf.RoundToInt(content.width * fit));
+                int dh = Mathf.Max(1, Mathf.RoundToInt(content.height * fit));
                 int dx = (w - dw) / 2;
                 int dy = IsBottomAligned(name) ? 0 : (h - dh) / 2;
                 Resample(pixels, sw, content, result, new RectInt(dx, dy, dw, dh), soft);
