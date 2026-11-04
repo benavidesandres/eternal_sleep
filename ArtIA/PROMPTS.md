@@ -8,6 +8,26 @@ con **el nombre exacto** de la tabla. Luego en Unity:
 
 Si un archivo no existe, se usa el dibujo generado por código. Así puedes cambiar el arte de a poco.
 
+## Fondos ilustrados de cada nivel
+
+Las escenas completas (bosque, pantano, cueva...) van en `Assets/Levels/Backgrounds/` con el nombre
+del nivel: `Level_01.jpg`, `Level_02.png`, etc. Si un nivel tiene imagen, se usa como fondo (con
+parallax suave y un poco oscurecida); si no, se usa el cielo con estrellas y colinas generado.
+
+Asignación actual (los originales están en `ArtIA/originales/`):
+
+| Nivel | Fondo |
+|---|---|
+| 1 | bosque (`fondo_bosque.jpg`) |
+| 2 | pantano (`fondo_pantano.jpg`) |
+| 3 | cueva (`fondo_cueva.jpg`) |
+| 4 | catedral (`fondo_catedral.jpg`) |
+| 5 | biblioteca (`fondo_biblioteca.jpg`) |
+| 6 | pueblo (`fondo_pueblo.jpg`) |
+
+El suelo, el relleno, la plataforma y los pinchos (`ground_top.png`, `ground_fill.png`, `platform.png`,
+`spikes.png`) están recortados de `originales/tileset.jpg`.
+
 ## Cómo se adapta la imagen
 
 - **Fondo:** si la imagen no tiene transparencia, se borra el color de las esquinas. Pide un fondo
