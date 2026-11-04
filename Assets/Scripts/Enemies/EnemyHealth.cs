@@ -19,6 +19,9 @@ namespace EternalSleep.Enemies
         private float invulnerableUntil;
 
         public int Current { get; private set; }
+        public int Max => maxHealth;
+        /// <summary>Le queda solo 1 de vida (y tenía más): momento de huir.</summary>
+        public bool IsWeak => maxHealth > 1 && Current == 1;
 
         /// <summary>Se dispara con la posición desde donde vino el golpe.</summary>
         public event Action<Vector2> Damaged;
