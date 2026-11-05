@@ -52,14 +52,12 @@ Para texturas que se repiten (suelo, fondos) cambia el final por:
 
 ## Personajes y objetos
 
+> Los enemigos (Sombra, Polilla, Vigía) y los aldeanos ya no usan arte IA: se dibujan por código
+> en `Assets/Editor/CreatureArt.cs` con varias animaciones cada uno (`Assets/Levels/Art/Creatures/`).
+> Si quieres reemplazar un cuadro, pon en `ArtIA/` un PNG con su nombre exacto (p. ej. `sombra_walk_0.png`).
+
 | Archivo | Tamaño final | Prompt (después del estilo base) |
 |---|---|---|
-| `sombra_0.png` | 16×12 | small blob-like shadow creature with two glowing golden eyes, dark purple body with a lavender highlight, facing left, side view |
-| `sombra_1.png` | 16×12 | same shadow creature slightly squashed, mid-step |
-| `polilla_0.png` | 16×16 | glowing moth made of light, pale lilac body, translucent lavender wings raised, golden head, front view |
-| `polilla_1.png` | 16×16 | same glowing moth with wings lowered |
-| `vigia_0.png` | 16×16 | large single eye on a small stone pedestal, pale white eyeball with pink iris looking left, dark outline |
-| `vigia_1.png` | 16×16 | same eye on pedestal, eyelid half closed |
 | `orbe_0.png` | 8×8 | small glowing dream orb, white core, pink and lavender glow |
 | `orbe_1.png` | 8×8 | same orb, slightly smaller glow |
 | `portal_0.png` | 16×32 | tall oval dream portal, lavender glowing ring, dark swirling purple center with white sparkles |
