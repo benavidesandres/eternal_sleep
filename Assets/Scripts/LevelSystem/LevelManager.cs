@@ -1,6 +1,8 @@
 using System.Collections;
 using EternalSleep.CameraSystem;
+using EternalSleep.Dream;
 using EternalSleep.Player;
+using EternalSleep.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -50,13 +52,22 @@ namespace EternalSleep.Level
         private void OnPlayerDied()
         {
             if (changingScene) return;
+            changingScene = true;
+            if (DeathScreen.Instance != null) { DeathScreen.Instance.Show(); return; } // la pantalla decide qué hacer
             StartCoroutine(LoadAfter(SceneManager.GetActiveScene().buildIndex, restartDelay));
         }
 
         public void CompleteLevel()
         {
             if (changingScene) return;
-            int next = SceneManager.GetActiveScene().buildIndex + 1;
+            if (DreamWorldManager.IsInDream)
+            {
+                // Sueño iniciado desde el pueblo: el aldeano despierta y volvemos al Hub.
+                changingScene = true;
+                DreamWorldManager.Instance.CompleteDream();
+                return;
+            }
+            int next =SceneManager.GetActiveScene().buildIndex + 1;
             if (next >= SceneManager.sceneCountInBuildSettings) next = 0; // fin del juego: vuelve al menú
             StartCoroutine(LoadAfter(next, nextLevelDelay));
         }
