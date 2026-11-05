@@ -12,10 +12,25 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 |---|---|---|
 | Moverse | A / D o ← / → | Stick izquierdo |
 | Saltar | Espacio | A |
-| Atacar | J o clic izquierdo | X |
+| Atacar | J, Z o clic izquierdo | X |
 | Atacar arriba / abajo | Mantener W / S al atacar | Stick arriba / abajo |
+| Hablar con un aldeano | W, ↑ o E (junto a él) | Y |
+| Pasar diálogo / elegir | Espacio, Enter, J o Z · ←/→ para elegir | A |
 | Volver en menús | Escape | B |
 
+- Empiezas en el **pueblo (Hub)**, un mapa largo con casas, faroles, un pozo y un cementerio.
+  Cinco aldeanos duermen en sus camas atrapados en pesadillas. Háblales:
+  murmuran en sueños y al final puedes elegir entrar en su sueño:
+  es una pesadilla al azar (uno de los niveles) con variaciones —menos enemigos, plataformas extra—.
+  Al llegar al portal, el aldeano despierta y vuelves al pueblo a su lado.
+- También hay **aldeanos despiertos** con los que conversar: Vesna la farolera, Grim el mercader,
+  Lune y Ash el sepulturero (y un gato negro). Sus pistas ayudan a encontrar los secretos.
+- **Lágrimas de Luna:** 7 coleccionables repartidos por el pueblo (contador bajo los corazones).
+  Algunas están en lo alto; una está muy bien escondida.
+- **Secretos:** hay easter eggs en objetos con los que se puede hablar (y algunos cambian si
+  insistes). No todo lo que parece pared lo es.
+- Al morir aparece la pantalla de muerte: la máscara de Kael se parte y puedes **intentarlo de nuevo**,
+  **volver al pueblo** (si estabas en un sueño) o ir al **menú principal**.
 - Tienes **3 corazones**. Los pinchos y las caídas quitan uno y te devuelven al último suelo seguro.
 - Si golpeas hacia abajo sobre un enemigo, rebotas.
 - Con 0 corazones se reinicia el nivel. El portal te lleva al siguiente.
@@ -24,9 +39,13 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 
 | Enemigo | Comportamiento |
 |---|---|
-| **Sombra** | Patrulla; al verte se detiene ("!"), te persigue y embiste. Nunca cae por los bordes. |
-| **Polilla** | Vuela sobre ti, tiembla como aviso y se lanza en picada. |
-| **Vigía** | Ojo fijo que dispara orbes apuntando por delante de ti. Puedes destruir los orbes. |
+| **Sombra** (3 golpes) | Bestia de sombra con cráneo y cuernos. Patrulla; al verte se detiene ("!"), corre hacia ti, se agacha y embiste. Nunca cae por los bordes. |
+| **Polilla** (2 golpes) | Polilla gigante con alas de ojos. Vuela sobre ti, sacude las alas como aviso y se lanza en picada. |
+| **Vigía** (3 golpes) | Ojo en un pedestal gótico. Su iris se enciende antes de disparar orbes por delante de ti; cada tercer disparo es un abanico de 3. Puedes destruir los orbes. |
+
+Al golpear a un enemigo se ilumina en blanco, se aplasta, suelta fragmentos y el juego se congela
+un instante; al morir se hincha y se deshace en humo. Cuando a Kael le pegan, destella en rojo,
+la cámara tiembla y la animación se detiene en seco.
 
 Todos te ven solo si no hay paredes en medio y huyen un rato cuando les queda 1 de vida.
 
@@ -69,10 +88,19 @@ Cada carácter es una casilla:
 | `F` | Polilla (vuela) |
 | `S` | Vigía (dispara) |
 | `G` | Portal de salida |
+| `N` | Aldeano dormido en su casa (solo en `Hub.txt`) |
+| `V` `O` `U` `Y` `K` | Vesna, Grim, Lune, Ash y el gato |
+| `A` `W` `R` `D` | Estatua, pozo, lápida rara y diario (se puede hablar con ellos) |
+| `C` | Lágrima de Luna |
+| `X` | Pared falsa (parece suelo, se atraviesa). `c` y `m` = lágrima y espejo escondidos dentro |
+| `L` `g` | Farola y lápida decorativa |
 | `.` | Vacío |
 
 El jugador salta unas **3 casillas de alto** y **5 de largo**. Después de editar un mapa,
-usa **Eternal Sleep → Construir niveles**. Para agregar un nivel, crea `Level_07.txt`.
+usa **Eternal Sleep → Construir niveles**. Para agregar un nivel, crea `Level_07.txt`
+(cualquier escena `Level_*` entra automáticamente en el sorteo de pesadillas).
+El pueblo es `Hub.txt`; si no tiene fondo propio usa el de `Level_06`.
+Para que un objeto de un sueño aparezca solo a veces, añádele el componente **DreamVariant**.
 
 ### Fondos y arte
 
@@ -89,11 +117,13 @@ usa **Eternal Sleep → Construir niveles**. Para agregar un nivel, crea `Level_
 Assets/
   Editor/            Herramientas del menú "Eternal Sleep" (constructor de niveles, menú, arte)
   Levels/            Mapas de texto, fondos y arte generado de los niveles
-  Scenes/            MainMenu, Levels/Level_01..06, SampleScene (pruebas)
+  Scenes/            MainMenu, Levels/Hub y Level_01..06, SampleScene (pruebas)
   Scripts/
     Player/          Movimiento, salto, ataque, vida
     Enemies/         IA de enemigos (Sombra, Polilla, Vigía) y sus sentidos
     LevelSystem/     Pinchos, portal, cambio de nivel, parallax
+    DreamSystem/     Pueblo ↔ sueños: aldeanos dormidos, pesadilla al azar y sus variaciones
+    Village/         Aldeanos que hablan, Lágrimas de Luna, paredes falsas, luces que titilan
     Camera/          Cámara que sigue al jugador
     UI/              Menú principal, opciones, corazones
   UI/                Fuente y sprites del menú
