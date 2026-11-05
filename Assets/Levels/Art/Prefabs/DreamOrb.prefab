@@ -112,6 +112,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 5d35313689e079e46912560fc4d35c3e, type: 3}
   - {fileID: 21300000, guid: 01dd6a04c92d9ae438775c5628acb35d, type: 3}
   framesPerSecond: 6
+  clips: []
 --- !u!50 &2562987325810294660
 Rigidbody2D:
   serializedVersion: 5

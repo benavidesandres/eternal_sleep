@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using EternalSleep.CameraSystem;
+using EternalSleep.Dream;
 using EternalSleep.Enemies;
 using EternalSleep.Level;
 using EternalSleep.Player;
 using EternalSleep.UI;
+using EternalSleep.Village;
+using TMPro;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
@@ -26,6 +29,9 @@ namespace EternalSleep.EditorTools
     ///   ^  pinchos            P  inicio del jugador
     ///   E  enemigo que camina F  enemigo que vuela
     ///   S  vigía que dispara  G  portal de salida   .  vacío
+    ///   N  aldeano dormido (solo en Hub.txt): al hablarle entras en su sueño
+    ///
+    /// Hub.txt (el pueblo) se construye primero y queda justo después del menú en Build Settings.
     /// </summary>
     public static class LevelBuilderEditor
     {
@@ -34,13 +40,22 @@ namespace EternalSleep.EditorTools
         private const string TilesFolder = "Assets/Levels/Art/Tiles";
         private const string ScenesFolder = "Assets/Scenes/Levels";
         private const string MenuScenePath = "Assets/Scenes/MainMenu.unity";
+        private const string HubMapPath = LevelsFolder + "/Hub.txt";
+        private const string HubBackgroundFallback = "Level_06"; // el pueblo de los sueños
         private const float TilePPU = 16f; // 16 píxeles = 1 casilla
+        private const string FontAssetPath = "Assets/UI/Fonts/PixelifySans SDF.asset";
+
+        /// <summary>Rutas de los cuadros de cada animación (se recargan en cada escena nueva).</summary>
+        private static readonly Dictionary<string, string[]> clipPaths = new Dictionary<string, string[]>();
 
         private class Art
         {
-            public RuleTile Ground;
+            public RuleTile Ground, GroundSecret; // GroundSecret: pared falsa (sin colisión)
             public Tile Platform, Spike;
-            public Sprite[] Walker, Flyer, Shooter, Orb, Portal;
+            public Sprite[] Orb, Portal;
+            public Sprite SleepZ, Prompt, DialoguePanel, DialogueNext;
+            public Sprite Vignette, MaskLeft, MaskRight, Mote;
+            public Dictionary<string, Sprite[]> Clips; // animaciones de enemigos y aldeanos (con su silueta "_flash")
             public Sprite Alert, HeartFull, HeartEmpty, Sky, Stars, Moon, HillsFar, HillsNear, Fog;
             public DreamOrb OrbPrefab;
         }
@@ -57,6 +72,7 @@ namespace EternalSleep.EditorTools
             var files = Directory.Exists(LevelsFolder)
                 ? Directory.GetFiles(LevelsFolder, "Level_*.txt").Select(p => p.Replace('\\', '/')).OrderBy(p => p).ToArray()
                 : new string[0];
+            if (File.Exists(HubMapPath)) files = new[] { HubMapPath }.Concat(files).ToArray();
             if (files.Length == 0)
             {
                 EditorUtility.DisplayDialog("Eternal Sleep", "No hay mapas en " + LevelsFolder + " (Level_01.txt, ...).", "OK");
@@ -119,13 +135,33 @@ namespace EternalSleep.EditorTools
 
             var start = new Vector2(1.5f, 3f);
             var enemies = new GameObject("Enemies").transform;
+            Transform villagers = null, village = null;
+            int villagerCount = 0, talkers = 0, collectibles = 0, graves = 0;
+            var secretCells = new List<Vector3Int>();
+            Transform Village() => village != null ? village : (village = new GameObject("Pueblo").transform);
 
             for (int row = 0; row < height; row++)
             for (int x = 0; x < lines[row].Length; x++)
             {
                 int y = height - 1 - row; // la primera línea del texto es la de arriba
                 var cell = new Vector3Int(x, y, 0);
-                switch (lines[row][x])
+                char ch = lines[row][x];
+                var feet = new Vector2(x + 0.5f, y);
+
+                // Pared falsa: suelo sin colisión (también bajo los objetos escondidos 'c' y 'm').
+                if (ch == 'X' || ch == 'c' || ch == 'm')
+                {
+                    ground.SetTile(cell, art.GroundSecret);
+                    secretCells.Add(cell);
+                }
+                if (IsTalker(ch))
+                {
+                    CreateTalker(Village(), art, feet, ch);
+                    talkers++;
+                    continue;
+                }
+
+                switch (ch)
                 {
                     case '#': ground.SetTile(cell, art.Ground); break;
                     case '=': platforms.SetTile(cell, art.Platform); break;
@@ -135,6 +171,17 @@ namespace EternalSleep.EditorTools
                     case 'F': CreateFlyer(enemies, art, new Vector2(x + 0.5f, y + 0.5f)); break;
                     case 'S': CreateShooter(enemies, art, new Vector2(x + 0.5f, y)); break;
                     case 'G': CreatePortal(art, new Vector2(x + 0.5f, y)); break;
+                    case 'N':
+                        if (villagers == null) villagers = new GameObject("Villagers").transform;
+                        CreateDreamer(villagers, art, new Vector2(x + 0.5f, y), ++villagerCount);
+                        break;
+                    case 'C':
+                    case 'c':
+                        CreateCollectible(Village(), art, new Vector2(x + 0.5f, y + 0.5f), $"lagrima_{x}_{y}", ch == 'c');
+                        collectibles++;
+                        break;
+                    case 'L': CreateLamp(Village(), art, feet); break;
+                    case 'g': CreateGrave(Village(), art, feet, graves++ % 3); break;
                 }
             }
 
@@ -155,17 +202,22 @@ namespace EternalSleep.EditorTools
             hazards.gameObject.AddComponent<TilemapCollider2D>().isTrigger = true;
             hazards.gameObject.AddComponent<Hazard>();
 
+            if (secretCells.Count > 0) CreateSecrets(ground, secretCells);
+
             // Jugador
             var player = PlayerSetupEditor.CreatePlayer(controller, groundLayer);
             player.transform.position = new Vector3(start.x, start.y + 0.01f, 0f);
             player.AddComponent<PlayerHealth>();
+            player.AddComponent<PlayerHurtFeedback>();
 
             var bounds = new Rect(0, 0, width, height);
             CreateLevelManager(bounds);
-            CreateLight();
+            CreateLight(villagerCount > 0 ? 0.8f : 1f); // el pueblo un poco más oscuro para que luzcan los faroles
             var cam = CreateCamera(player.transform, start, bounds);
             CreateBackground(art, cam, bounds, levelName);
-            CreateHud(art);
+            CreateHud(art, collectibles > 0);
+            if (villagerCount > 0 || talkers > 0) CreateDialogueBox(art);
+            CreateDeathScreen(art);
 
             if (ground.GetUsedTilesCount() == 0)
                 Debug.LogError($"[Eternal Sleep] {levelName}: el suelo quedó vacío (¿falta el tile de suelo?).");
@@ -209,6 +261,8 @@ namespace EternalSleep.EditorTools
                 }
                 else field.SetValue(art, Load(p[0], type));
             }
+            art.Clips = clipPaths.ToDictionary(kv => kv.Key,
+                kv => kv.Value.Select(AssetDatabase.LoadAssetAtPath<Sprite>).ToArray());
             return art;
         }
 
@@ -236,16 +290,17 @@ namespace EternalSleep.EditorTools
             var go = new GameObject("Sombra");
             go.transform.SetParent(parent, false);
             go.transform.position = feet;
-            AddEnemyBase(go, art.Walker, 5);
+            AddEnemyBase(go, art, "sombra", 5, 3, PixelArt.Hex("#8C7FB5"), new Vector2(0f, 0.75f),
+                ("idle", 3f, true), ("walk", 8f, true), ("run", 13f, true), ("windup", 14f, true), ("lunge", 1f, true), ("hurt", 1f, true));
 
             var col = go.AddComponent<BoxCollider2D>();
             col.isTrigger = true;
-            col.size = new Vector2(0.85f, 0.65f);
-            col.offset = new Vector2(0f, 0.33f);
+            col.size = new Vector2(1.7f, 1.3f);
+            col.offset = new Vector2(0f, 0.65f);
 
-            AddSenses(go, 6f, 0.2f, new Vector2(0f, 0.4f)); // solo ve hacia delante
+            AddSenses(go, 6.5f, 0.2f, new Vector2(-0.5f, 0.95f)); // solo ve hacia delante
             var walker = go.AddComponent<WalkerEnemy>();
-            SetRefs(walker, ("alertIcon", AddAlertIcon(go, art, 1.1f)));
+            SetRefs(walker, ("alertIcon", AddAlertIcon(go, art, 2.0f)));
         }
 
         private static void CreateFlyer(Transform parent, Art art, Vector2 center)
@@ -253,15 +308,16 @@ namespace EternalSleep.EditorTools
             var go = new GameObject("Polilla");
             go.transform.SetParent(parent, false);
             go.transform.position = center;
-            AddEnemyBase(go, art.Flyer, 6);
+            AddEnemyBase(go, art, "polilla", 6, 2, PixelArt.Hex("#CDBFF5"), Vector2.zero,
+                ("fly", 10f, true), ("flyfast", 15f, true), ("windup", 16f, true), ("swoop", 1f, true), ("hurt", 1f, true));
 
             var col = go.AddComponent<CircleCollider2D>();
             col.isTrigger = true;
-            col.radius = 0.4f;
+            col.radius = 0.72f;
 
-            AddSenses(go, 6f, -1f, Vector2.zero); // ve en todas direcciones
+            AddSenses(go, 6.5f, -1f, Vector2.zero); // ve en todas direcciones
             var flyer = go.AddComponent<FlyerEnemy>();
-            SetRefs(flyer, ("alertIcon", AddAlertIcon(go, art, 0.8f)));
+            SetRefs(flyer, ("alertIcon", AddAlertIcon(go, art, 1.25f)));
         }
 
         private static void CreateShooter(Transform parent, Art art, Vector2 feet)
@@ -269,20 +325,20 @@ namespace EternalSleep.EditorTools
             var go = new GameObject("Vigia");
             go.transform.SetParent(parent, false);
             go.transform.position = feet;
-            AddEnemyBase(go, art.Shooter, 5);
-
-            var health = new SerializedObject(go.GetComponent<EnemyHealth>());
-            health.FindProperty("maxHealth").intValue = 3;
-            health.ApplyModifiedPropertiesWithoutUndo();
+            AddEnemyBase(go, art, "vigia", 5, 3, PixelArt.Hex("#E86A92"), new Vector2(0f, 1.5f),
+                ("idle", 3f, true), ("aim", 10f, true), ("shoot", 1f, true), ("hurt", 1f, true));
 
             var col = go.AddComponent<BoxCollider2D>();
             col.isTrigger = true;
-            col.size = new Vector2(0.8f, 0.9f);
-            col.offset = new Vector2(0f, 0.45f);
+            col.size = new Vector2(1.3f, 2.1f);
+            col.offset = new Vector2(0f, 1.05f);
 
-            AddSenses(go, 8f, -1f, new Vector2(0f, 0.5f));
+            AddSenses(go, 8.5f, -1f, new Vector2(0f, 1.5f));
             var shooter = go.AddComponent<ShooterEnemy>();
-            SetRefs(shooter, ("projectilePrefab", art.OrbPrefab), ("alertIcon", AddAlertIcon(go, art, 1.3f)));
+            SetRefs(shooter, ("projectilePrefab", art.OrbPrefab), ("alertIcon", AddAlertIcon(go, art, 2.6f)));
+            var so = new SerializedObject(shooter);
+            so.FindProperty("muzzleOffset").vector2Value = new Vector2(-0.4f, 1.5f);
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void AddSenses(GameObject go, float range, float minFacingDot, Vector2 eye)
@@ -308,20 +364,52 @@ namespace EternalSleep.EditorTools
             return icon;
         }
 
-        /// <summary>Lo que comparten todos los enemigos: sprite animado, física sin gravedad, vida y daño al tocar.</summary>
-        private static void AddEnemyBase(GameObject go, Sprite[] frames, int sortingOrder)
+        /// <summary>Lo que comparten todos los enemigos: animaciones, física sin gravedad, vida, efectos de golpe y daño al tocar.</summary>
+        private static void AddEnemyBase(GameObject go, Art art, string prefix, int sortingOrder, int health,
+            Color hitColor, Vector2 center, params (string name, float fps, bool loop)[] clips)
         {
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = frames[0];
+            sr.sprite = art.Clips[$"{prefix}_{clips[0].name}"][0];
             sr.sortingOrder = sortingOrder;
-            SetRefs(go.AddComponent<SpriteFlipbook>(), ("frames", frames));
+            SetClips(go.AddComponent<SpriteFlipbook>(), art, prefix, true, clips);
 
             var rb = go.AddComponent<Rigidbody2D>();
             rb.bodyType = RigidbodyType2D.Kinematic;
             rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-            go.AddComponent<EnemyHealth>();
+            var hp = new SerializedObject(go.AddComponent<EnemyHealth>());
+            hp.FindProperty("maxHealth").intValue = health;
+            hp.FindProperty("hitColor").colorValue = hitColor;
+            hp.FindProperty("centerOffset").vector2Value = center;
+            hp.ApplyModifiedPropertiesWithoutUndo();
             go.AddComponent<EnemyContactDamage>();
+        }
+
+        /// <summary>Rellena la lista de clips de un SpriteFlipbook.</summary>
+        private static void SetClips(SpriteFlipbook book, Art art, string prefix, bool withFlash,
+            params (string name, float fps, bool loop)[] clips)
+        {
+            var so = new SerializedObject(book);
+            var list = so.FindProperty("clips");
+            list.arraySize = clips.Length;
+            for (int i = 0; i < clips.Length; i++)
+            {
+                var (name, fps, loop) = clips[i];
+                var e = list.GetArrayElementAtIndex(i);
+                e.FindPropertyRelative("name").stringValue = name;
+                e.FindPropertyRelative("fps").floatValue = fps;
+                e.FindPropertyRelative("loop").boolValue = loop;
+                FillArray(e.FindPropertyRelative("frames"), art.Clips[$"{prefix}_{name}"]);
+                FillArray(e.FindPropertyRelative("flash"),
+                    withFlash && art.Clips.TryGetValue($"{prefix}_{name}_flash", out var f) ? f : new Sprite[0]);
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void FillArray(SerializedProperty prop, Object[] values)
+        {
+            prop.arraySize = values.Length;
+            for (int i = 0; i < values.Length; i++) prop.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
         }
 
         private static void CreatePortal(Art art, Vector2 feet)
@@ -338,6 +426,589 @@ namespace EternalSleep.EditorTools
             col.size = new Vector2(0.8f, 1.8f);
             col.offset = new Vector2(0f, 0.9f);
             go.AddComponent<LevelGoal>();
+        }
+
+        /// <summary>Aldeano dormido: respira bajo su manta, le salen "Z", tiene bocadillo para hablar y su diálogo.</summary>
+        private static void CreateDreamer(Transform parent, Art art, Vector2 feet, int number)
+        {
+            var info = Villagers[(number - 1) % Villagers.Length];
+            int variant = (number - 1) % VillagerVariants;
+
+            // Casa en corte con su ventana iluminada, una vela y un farolito.
+            var house = new GameObject("Casa_" + number);
+            house.transform.SetParent(parent, false);
+            house.transform.position = feet;
+            var hsr = house.AddComponent<SpriteRenderer>();
+            hsr.sprite = art.Clips[$"casa{variant}_idle"][0];
+            hsr.sortingOrder = -20;
+            AddLight(house.transform, new Vector2(0f, 1.75f), new Color(0.7f, 0.62f, 1f), 0.7f, 2.6f, false);
+            AddLight(house.transform, new Vector2(variant % 2 == 0 ? -1.5f : 2.25f, 2.3f), new Color(1f, 0.78f, 0.4f), 0.8f, 1.8f, true);
+            AddLight(house.transform, new Vector2(3.33f, 3.2f), new Color(1f, 0.65f, 0.3f), 0.8f, 2.2f, true);
+
+            var go = new GameObject("Aldeano_" + number);
+            go.transform.SetParent(parent, false);
+            go.transform.position = feet;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = art.Clips[$"aldeano{variant}_sleep"][0];
+            sr.sortingOrder = 4;
+            var book = go.AddComponent<SpriteFlipbook>();
+            SetClips(book, art, "aldeano" + variant, false, ("sleep", 2.5f, true), ("awake", 1.5f, true));
+
+            var col = go.AddComponent<BoxCollider2D>();
+            col.isTrigger = true;
+            col.size = new Vector2(3.0f, 2.0f);
+            col.offset = new Vector2(0f, 1.0f);
+
+            var zs = new Object[3];
+            for (int i = 0; i < zs.Length; i++)
+            {
+                var z = new GameObject("Zzz" + i);
+                z.transform.SetParent(go.transform, false);
+                z.transform.localPosition = new Vector3(-0.6f, 1.1f, 0f);
+                var zsr = z.AddComponent<SpriteRenderer>();
+                zsr.sprite = art.SleepZ;
+                zsr.sortingOrder = 6;
+                zs[i] = z.transform;
+            }
+
+            var prompt = new GameObject("Hablar");
+            prompt.transform.SetParent(go.transform, false);
+            prompt.transform.localPosition = new Vector3(-0.2f, 1.95f, 0f);
+            var psr = prompt.AddComponent<SpriteRenderer>();
+            psr.sprite = art.Prompt;
+            psr.sortingOrder = 20;
+            prompt.SetActive(false);
+
+            var npc = go.AddComponent<DreamerNPC>();
+            SetRefs(npc, ("body", book), ("prompt", prompt), ("sleepZ", zs));
+            var so = new SerializedObject(npc);
+            so.FindProperty("dreamerId").stringValue = go.name;
+            so.FindProperty("displayName").stringValue = info.Name;
+            FillStrings(so.FindProperty("sleepingLines"), info.Sleeping);
+            FillStrings(so.FindProperty("awakeLines"), info.Awake);
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void FillStrings(SerializedProperty prop, string[] values)
+        {
+            prop.arraySize = values.Length;
+            for (int i = 0; i < values.Length; i++) prop.GetArrayElementAtIndex(i).stringValue = values[i];
+        }
+
+        private const int VillagerVariants = 5;
+
+        private struct VillagerInfo
+        {
+            public string Name;
+            public string[] Sleeping, Awake;
+        }
+
+        /// <summary>Quién duerme en el pueblo y qué murmura (en el orden de Hub.txt, de arriba a abajo y de izquierda a derecha).</summary>
+        private static readonly VillagerInfo[] Villagers =
+        {
+            new VillagerInfo
+            {
+                Name = "Maela, la panadera",
+                Sleeping = new[]
+                {
+                    "...el horno... no deja de arder... ¿quién está ahí dentro?",
+                    "Mmm... las sombras me piden pan... pan de ceniza...",
+                    "(Su respiración es agitada. Algo la persigue en sueños.)",
+                },
+                Awake = new[]
+                {
+                    "Kael... soñé que el fuego tenía ojos. Y tú lo apagaste.",
+                    "Ya no tengo miedo de cerrar los ojos. Gracias.",
+                },
+            },
+            new VillagerInfo
+            {
+                Name = "Bram, el herrero",
+                Sleeping = new[]
+                {
+                    "...el martillo pesa... cada golpe suena como una campana...",
+                    "No... no abras esa puerta, hija...",
+                    "(Aprieta los puños bajo la manta.)",
+                },
+                Awake = new[]
+                {
+                    "Desperté con las manos temblando... pero desperté.",
+                    "Si alguna vez necesitas una hoja nueva, la forja es tuya.",
+                },
+            },
+            new VillagerInfo
+            {
+                Name = "Hermana Ilse",
+                Sleeping = new[]
+                {
+                    "...las velas se apagan una a una... y nadie reza...",
+                    "La catedral... respira... la oigo respirar...",
+                    "(Murmura una oración que nunca termina.)",
+                },
+                Awake = new[]
+                {
+                    "Las velas volvieron a encenderse. Lo vi en el sueño.",
+                    "Que la luz guíe tu máscara, caballero.",
+                },
+            },
+            new VillagerInfo
+            {
+                Name = "Tobi",
+                Sleeping = new[]
+                {
+                    "...mamá... la polilla grande está en la ventana...",
+                    "No quiero jugar más a las escondidas... me están buscando...",
+                    "(Se abraza a un muñeco de trapo.)",
+                },
+                Awake = new[]
+                {
+                    "¡Kael! ¡Le pegaste a la polilla gigante! ¿Verdad que sí?",
+                    "Ya no me escondo debajo de la cama.",
+                },
+            },
+            new VillagerInfo
+            {
+                Name = "El viejo Orren",
+                Sleeping = new[]
+                {
+                    "...he soñado este sueño mil veces... siempre termina igual...",
+                    "El ojo... el ojo que nunca parpadea...",
+                    "(Sonríe con tristeza, sin despertar.)",
+                },
+                Awake = new[]
+                {
+                    "Mil noches en el mismo sueño... y hoy terminó distinto.",
+                    "Hay más durmientes ahí abajo, muchacho. El sueño eterno no descansa.",
+                },
+            },
+        };
+
+        /// <summary>Caja de diálogo (abajo de la pantalla) con nombre, texto, flecha y dos opciones.</summary>
+        private static void CreateDialogueBox(Art art)
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontAssetPath);
+
+            var canvasGo = new GameObject("Dialogo", typeof(RectTransform));
+            canvasGo.layer = LayerMask.NameToLayer("UI");
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 50;
+            var scaler = canvasGo.AddComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(640, 360);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            var panel = NewUI("Panel", canvasGo.transform);
+            panel.anchorMin = new Vector2(0.5f, 0f);
+            panel.anchorMax = new Vector2(0.5f, 0f);
+            panel.pivot = new Vector2(0.5f, 0f);
+            panel.anchoredPosition = new Vector2(0f, 12f);
+            panel.sizeDelta = new Vector2(540f, 92f);
+            var img = panel.gameObject.AddComponent<UnityEngine.UI.Image>();
+            img.sprite = art.DialoguePanel;
+            img.type = UnityEngine.UI.Image.Type.Sliced;
+            img.pixelsPerUnitMultiplier = 0.5f; // borde al doble: pixelado y nítido
+            img.raycastTarget = false;
+
+            TMP_Text Text(string name, Vector2 pos, Vector2 size, float fontSize, Color color)
+            {
+                var r = NewUI(name, panel);
+                r.anchorMin = r.anchorMax = r.pivot = new Vector2(0f, 1f);
+                r.anchoredPosition = pos;
+                r.sizeDelta = size;
+                var t = r.gameObject.AddComponent<TextMeshProUGUI>();
+                if (font != null) t.font = font;
+                t.fontSize = fontSize;
+                t.color = color;
+                t.alignment = TextAlignmentOptions.TopLeft;
+                t.raycastTarget = false;
+                return t;
+            }
+
+            var nameText = Text("Nombre", new Vector2(14f, -8f), new Vector2(300f, 18f), 13f, PixelArt.Gold);
+            var body = Text("Texto", new Vector2(14f, -28f), new Vector2(512f, 44f), 12f, PixelArt.Moon);
+            var choiceA = Text("OpcionA", new Vector2(14f, -70f), new Vector2(250f, 16f), 12f, PixelArt.Lilac);
+            var choiceB = Text("OpcionB", new Vector2(270f, -70f), new Vector2(250f, 16f), 12f, PixelArt.Lilac);
+
+            var next = NewUI("Siguiente", panel);
+            next.anchorMin = next.anchorMax = next.pivot = new Vector2(1f, 0f);
+            next.anchoredPosition = new Vector2(-12f, 8f);
+            next.sizeDelta = new Vector2(14f, 10f);
+            var nextImg = next.gameObject.AddComponent<UnityEngine.UI.Image>();
+            nextImg.sprite = art.DialogueNext;
+            nextImg.raycastTarget = false;
+
+            var box = canvasGo.AddComponent<DialogueBox>();
+            SetRefs(box, ("root", panel.gameObject), ("nameText", nameText), ("bodyText", body),
+                ("nextIcon", next.gameObject), ("choiceTexts", new Object[] { choiceA, choiceB }));
+        }
+
+        // ---------- Pueblo: personajes, objetos, faroles, coleccionables y secretos ----------
+
+        private struct TalkerInfo
+        {
+            public char Key;
+            public string Name, Art;
+            public float Fps;
+            public bool Face, Object;
+            public Vector2? Light;
+            public int SecretAfter;
+            public string[] Lines, Secret, Reward;
+        }
+
+        /// <summary>
+        /// Quién o qué hay en cada letra del mapa del pueblo:
+        /// V Vesna · O Grim · U Lune · Y Ash · K gato · A estatua · W pozo · R lápida rara · m espejo (sala secreta) · D diario.
+        /// </summary>
+        private static readonly TalkerInfo[] Talkers =
+        {
+            new TalkerInfo
+            {
+                Key = 'V', Name = "Vesna, la farolera", Art = "npc_vesna", Fps = 4f, Face = true, Light = new Vector2(-0.55f, 1.65f),
+                Lines = new[]
+                {
+                    "Enciendo los faroles cada noche para que los durmientes encuentren el camino de vuelta.",
+                    "Dicen que las Lágrimas de Luna caen donde alguien tuvo un sueño bonito. Aún quedan algunas por el pueblo.",
+                    "Si buscas bien... algunas paredes no son tan sólidas como parecen.",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'O', Name = "Grim, el mercader", Art = "npc_grim", Fps = 3f, Face = true,
+                Lines = new[]
+                {
+                    "¿Comprar? No, no... ya no vendo nada. Las monedas no sirven en los sueños.",
+                    "Pero colecciono cosas brillantes. Tráeme todas las Lágrimas de Luna del pueblo y te contaré un secreto.",
+                },
+                Reward = new[]
+                {
+                    "¡Todas las Lágrimas! Brillan como el primer día...",
+                    "Un trato es un trato: antes de ti hubo otro caballero con máscara. Entró en el sueño eterno y nunca volvió.",
+                    "Su estatua está a la entrada del pueblo. Quizás, en algún lugar, él también te está soñando.",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'U', Name = "Lune", Art = "npc_lune", Fps = 5f, Face = true,
+                Lines = new[]
+                {
+                    "¡Mira! Atrapé una polilla de luz. Es de las buenas, no muerde.",
+                    "Mi hermano Tobi está dormido y no despierta... ¿Tú puedes ayudarlo?",
+                    "Cuando sea grande quiero ser caballera. Con máscara y todo.",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'Y', Name = "Ash, el sepulturero", Art = "npc_ash", Fps = 3f, Face = true,
+                Lines = new[]
+                {
+                    "Cavo tumbas para los que nunca despertaron.",
+                    "No me mires así. Hoy no he cavado ninguna. Será gracias a ti.",
+                    "Hay una lápida muy rara al fondo del cementerio. Léela, si te atreves.",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'K', Name = "Gato negro", Art = "npc_gato", Fps = 4f, Face = true, SecretAfter = 5,
+                Lines = new[] { "Miau.", "(El gato parpadea lentamente. Es una señal de confianza.)" },
+                Secret = new[]
+                {
+                    "...",
+                    "Está bien. Ya que insistes tanto: los sueños también sueñan.",
+                    "(El gato bosteza y hace como si no hubiera dicho nada.)",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'A', Name = "Estatua", Art = "obj_estatua", Object = true,
+                Lines = new[]
+                {
+                    "Una estatua de un caballero con máscara. Se parece muchísimo a ti.",
+                    "La placa dice: \"Al primer soñador, que entró en el sueño eterno y nunca volvió\".",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'W', Name = "Pozo", Art = "obj_pozo", Object = true, SecretAfter = 3,
+                Lines = new[] { "Te asomas al pozo. Muy al fondo, algo brilla." },
+                Secret = new[]
+                {
+                    "Gritas tu nombre al pozo.",
+                    "\"...Kael...\" responde el eco. Y luego, mucho más bajo: \"...gracias...\"",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'R', Name = "Lápida", Art = "obj_tumba3", Object = true,
+                Lines = new[]
+                {
+                    "\"Aquí yace el último bug de este juego.\"",
+                    "\"Murió como vivió: sin que nadie pudiera reproducirlo.\"",
+                    "(Alguien le dejó una flor.)",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'm', Name = "Espejo", Art = "obj_espejo", Object = true, Light = new Vector2(0f, 1.1f),
+                Lines = new[]
+                {
+                    "Te miras en el espejo.",
+                    "Tu reflejo tarda un segundo de más en moverse...",
+                    "...y por un instante, juraría que sonrió.",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'D', Name = "Diario", Art = "obj_diario", Object = true,
+                Lines = new[]
+                {
+                    "Un diario viejo, abierto en la última página:",
+                    "\"Si estás leyendo esto, gracias por jugar hasta aquí arriba.\"",
+                    "\"Que tus sueños sean siempre amables. —A.B.\"",
+                },
+            },
+        };
+
+        private static bool IsTalker(char c) => Talkers.Any(t => t.Key == c);
+
+        private static void CreateTalker(Transform parent, Art art, Vector2 feet, char key)
+        {
+            var info = Talkers.First(t => t.Key == key);
+            var go = new GameObject(info.Name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = feet;
+
+            var frames = art.Clips[info.Art + "_idle"];
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = frames[0];
+            sr.sortingOrder = info.Object ? -5 : 5;
+            if (frames.Length > 1) SetClips(go.AddComponent<SpriteFlipbook>(), art, info.Art, false, ("idle", info.Fps, true));
+
+            var col = go.AddComponent<BoxCollider2D>();
+            col.isTrigger = true;
+            col.size = new Vector2(2.4f, 2.4f);
+            col.offset = new Vector2(0f, 1.2f);
+
+            var prompt = new GameObject("Hablar");
+            prompt.transform.SetParent(go.transform, false);
+            prompt.transform.localPosition = new Vector3(0f, frames[0].bounds.size.y + 0.35f, 0f);
+            var psr = prompt.AddComponent<SpriteRenderer>();
+            psr.sprite = art.Prompt;
+            psr.sortingOrder = 20;
+            prompt.SetActive(false);
+
+            var npc = go.AddComponent<TalkingNPC>();
+            SetRefs(npc, ("prompt", prompt), ("body", sr));
+            var so = new SerializedObject(npc);
+            so.FindProperty("npcId").stringValue = info.Art;
+            so.FindProperty("displayName").stringValue = info.Name;
+            so.FindProperty("facePlayer").boolValue = info.Face;
+            so.FindProperty("secretAfterTalks").intValue = info.SecretAfter;
+            FillStrings(so.FindProperty("lines"), info.Lines);
+            FillStrings(so.FindProperty("secretLines"), info.Secret ?? new string[0]);
+            FillStrings(so.FindProperty("rewardLines"), info.Reward ?? new string[0]);
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            if (info.Light.HasValue) AddLight(go.transform, info.Light.Value, new Color(1f, 0.8f, 0.45f), 0.9f, 2.6f, true);
+        }
+
+        private static void CreateCollectible(Transform parent, Art art, Vector2 center, string id, bool hidden)
+        {
+            var go = new GameObject("LagrimaDeLuna");
+            go.transform.SetParent(parent, false);
+            go.transform.position = center;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = art.Clips["lagrima_idle"][0];
+            sr.sortingOrder = hidden ? -1 : 6; // las escondidas quedan detrás de la pared falsa
+            SetClips(go.AddComponent<SpriteFlipbook>(), art, "lagrima", false, ("idle", 6f, true));
+
+            var col = go.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+            col.radius = 0.45f;
+            var c = go.AddComponent<Collectible>();
+            var so = new SerializedObject(c);
+            so.FindProperty("id").stringValue = id;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            AddLight(go.transform, Vector2.zero, new Color(0.6f, 0.8f, 1f), hidden ? 0.35f : 0.7f, 1.7f, true);
+        }
+
+        private static void CreateLamp(Transform parent, Art art, Vector2 feet)
+        {
+            var go = new GameObject("Farola");
+            go.transform.SetParent(parent, false);
+            go.transform.position = feet;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = art.Clips["farol_idle"][0];
+            sr.sortingOrder = -5;
+            SetClips(go.AddComponent<SpriteFlipbook>(), art, "farol", false, ("idle", 4f, true));
+            AddLight(go.transform, new Vector2(0f, 2.75f), new Color(1f, 0.72f, 0.38f), 1f, 4.5f, true);
+        }
+
+        private static void CreateGrave(Transform parent, Art art, Vector2 feet, int type)
+        {
+            var go = new GameObject("Tumba");
+            go.transform.SetParent(parent, false);
+            go.transform.position = feet;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = art.Clips[$"obj_tumba{type}_idle"][0];
+            sr.sortingOrder = -5;
+        }
+
+        private static void AddLight(Transform parent, Vector2 local, Color color, float intensity, float radius, bool flicker)
+        {
+            var go = new GameObject("Luz");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            var l = go.AddComponent<Light2D>();
+            l.lightType = Light2D.LightType.Point;
+            l.color = color;
+            l.intensity = intensity;
+            l.pointLightOuterRadius = radius;
+            l.pointLightInnerRadius = radius * 0.15f;
+            l.falloffIntensity = 0.7f;
+            if (flicker) go.AddComponent<LightFlicker>();
+        }
+
+        /// <summary>Agrupa las casillas de pared falsa que se tocan y crea una zona secreta por grupo.</summary>
+        private static void CreateSecrets(Tilemap ground, List<Vector3Int> cells)
+        {
+            var left = new HashSet<Vector3Int>(cells);
+            int n = 0;
+            while (left.Count > 0)
+            {
+                var group = new List<Vector3Int>();
+                var queue = new Queue<Vector3Int>();
+                var first = left.First();
+                queue.Enqueue(first);
+                left.Remove(first);
+                while (queue.Count > 0)
+                {
+                    var c = queue.Dequeue();
+                    group.Add(c);
+                    foreach (var d in new[] { Vector3Int.left, Vector3Int.right, Vector3Int.up, Vector3Int.down })
+                        if (left.Remove(c + d)) queue.Enqueue(c + d);
+                }
+
+                int minX = group.Min(c => c.x), maxX = group.Max(c => c.x);
+                int minY = group.Min(c => c.y), maxY = group.Max(c => c.y);
+                var go = new GameObject("Secreto_" + (++n));
+                go.transform.position = new Vector3((minX + maxX + 1) * 0.5f, (minY + maxY + 1) * 0.5f, 0f);
+                var box = go.AddComponent<BoxCollider2D>();
+                box.isTrigger = true;
+                box.size = new Vector2(maxX - minX + 1, maxY - minY + 1);
+
+                var area = go.AddComponent<SecretArea>();
+                var so = new SerializedObject(area);
+                so.FindProperty("wall").objectReferenceValue = ground;
+                so.FindProperty("secretId").stringValue = go.name;
+                var prop = so.FindProperty("cells");
+                prop.arraySize = group.Count;
+                for (int i = 0; i < group.Count; i++) prop.GetArrayElementAtIndex(i).vector3IntValue = group[i];
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        /// <summary>Dibuja y guarda el arte del pueblo y la pantalla de muerte.</summary>
+        private static void CreateVillageClips()
+        {
+            var feet = new Vector2(0.5f, 0f);
+            float ppu = VillageArt.PPU;
+            for (int v = 0; v < VillagerVariants; v++)
+            {
+                SaveClip($"casa{v}_idle", new[] { VillageArt.House(v) }, feet, false, ppu);
+                SaveClip($"aldeano{v}_sleep", VillageArt.Sleeping(v), feet, false, ppu);
+                SaveClip($"aldeano{v}_awake", VillageArt.AwakeInBed(v), feet, false, ppu);
+            }
+            SaveClip("npc_vesna_idle", VillageArt.Lamplighter(), feet, false, ppu);
+            SaveClip("npc_grim_idle", VillageArt.Merchant(), feet, false, ppu);
+            SaveClip("npc_ash_idle", VillageArt.Gravedigger(), feet, false, ppu);
+            SaveClip("npc_lune_idle", VillageArt.Girl(), feet, false, ppu);
+            SaveClip("npc_gato_idle", VillageArt.Cat(), feet, false, ppu);
+            SaveClip("obj_estatua_idle", new[] { VillageArt.Statue() }, feet, false, ppu);
+            SaveClip("obj_pozo_idle", new[] { VillageArt.Well() }, feet, false, ppu);
+            for (int t = 0; t < 4; t++) SaveClip($"obj_tumba{t}_idle", new[] { VillageArt.Grave(t) }, feet, false, ppu);
+            SaveClip("obj_espejo_idle", new[] { VillageArt.Mirror() }, feet, false, ppu);
+            SaveClip("obj_diario_idle", new[] { VillageArt.Diary() }, feet, false, ppu);
+            SaveClip("farol_idle", VillageArt.LampPost(), feet, false, ppu);
+            SaveClip("lagrima_idle", VillageArt.MoonTear(), new Vector2(0.5f, 0.5f), false, ppu);
+        }
+
+        /// <summary>Pantalla de muerte (oculta): fondo oscuro, viñeta, máscara partida, título, frase y opciones.</summary>
+        private static void CreateDeathScreen(Art art)
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontAssetPath);
+            var canvasGo = new GameObject("PantallaMuerte", typeof(RectTransform));
+            canvasGo.layer = LayerMask.NameToLayer("UI");
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 200;
+            var scaler = canvasGo.AddComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(640, 360);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            RectTransform Stretch(string name, Transform parent)
+            {
+                var r = NewUI(name, parent);
+                r.anchorMin = Vector2.zero;
+                r.anchorMax = Vector2.one;
+                r.offsetMin = r.offsetMax = Vector2.zero;
+                return r;
+            }
+
+            var root = Stretch("Contenido", canvasGo.transform);
+            var overlay = Stretch("Oscuridad", root).gameObject.AddComponent<UnityEngine.UI.Image>();
+            overlay.color = new Color(0.03f, 0.02f, 0.05f, 0f);
+            overlay.raycastTarget = false;
+            var vignette = Stretch("Vineta", root).gameObject.AddComponent<UnityEngine.UI.Image>();
+            vignette.sprite = art.Vignette;
+            vignette.raycastTarget = false;
+
+            RectTransform MaskHalf(string name, Sprite sprite)
+            {
+                var r = NewUI(name, root);
+                r.anchorMin = r.anchorMax = r.pivot = new Vector2(0.5f, 0.5f);
+                r.sizeDelta = new Vector2(96f, 120f);
+                var img = r.gameObject.AddComponent<UnityEngine.UI.Image>();
+                img.sprite = sprite;
+                img.raycastTarget = false;
+                return r;
+            }
+            var maskL = MaskHalf("MascaraIzq", art.MaskLeft);
+            var maskR = MaskHalf("MascaraDer", art.MaskRight);
+
+            TMP_Text Text(string name, float y, float size, Color color, string text)
+            {
+                var r = NewUI(name, root);
+                r.anchorMin = r.anchorMax = r.pivot = new Vector2(0.5f, 0.5f);
+                r.anchoredPosition = new Vector2(0f, y);
+                r.sizeDelta = new Vector2(620f, size + 10f);
+                var t = r.gameObject.AddComponent<TextMeshProUGUI>();
+                if (font != null) t.font = font;
+                t.fontSize = size;
+                t.color = color;
+                t.alignment = TextAlignmentOptions.Center;
+                t.raycastTarget = false;
+                t.text = text;
+                return t;
+            }
+
+            var title = Text("Titulo", -30f, 24f, PixelArt.Pale, "EL SUEÑO TE CONSUMIÓ");
+            title.characterSpacing = 8f;
+            var quote = Text("Frase", -56f, 11f, PixelArt.Soft, "");
+            quote.fontStyle = FontStyles.Italic;
+            var options = new Object[]
+            {
+                Text("Opcion0", -92f, 13f, PixelArt.Lilac, ""),
+                Text("Opcion1", -112f, 13f, PixelArt.Lilac, ""),
+                Text("Opcion2", -132f, 13f, PixelArt.Lilac, ""),
+            };
+
+            var screen = canvasGo.AddComponent<DeathScreen>();
+            SetRefs(screen, ("root", root.gameObject), ("overlay", overlay), ("vignette", vignette),
+                ("maskLeft", maskL), ("maskRight", maskR), ("title", title), ("quote", quote),
+                ("options", options), ("moteSprite", art.Mote));
         }
 
         private static void CreateLevelManager(Rect bounds)
@@ -361,12 +1032,12 @@ namespace EternalSleep.EditorTools
             wall.AddComponent<BoxCollider2D>().size = new Vector2(1f, bounds.height + 30f);
         }
 
-        private static void CreateLight()
+        private static void CreateLight(float intensity)
         {
             // Sin luz global, los sprites con el material 2D Lit de URP se verían negros.
             var light = new GameObject("Global Light 2D").AddComponent<Light2D>();
             light.lightType = Light2D.LightType.Global;
-            light.intensity = 1f;
+            light.intensity = intensity;
         }
 
         private static Camera CreateCamera(Transform player, Vector2 start, Rect bounds)
@@ -403,6 +1074,7 @@ namespace EternalSleep.EditorTools
             layerCameraReference = c; // todas las capas se colocan para esta posición de cámara
 
             var image = LoadLevelBackground(levelName);
+            if (image == null && levelName == "Hub") image = LoadLevelBackground(HubBackgroundFallback);
             if (image != null)
             {
                 // Fondo ilustrado del nivel: se mueve un poco más lento que la cámara.
@@ -494,7 +1166,7 @@ namespace EternalSleep.EditorTools
             sr.size = new Vector2(width, height);
         }
 
-        private static void CreateHud(Art art)
+        private static void CreateHud(Art art, bool collectibles)
         {
             var canvasGo = new GameObject("HUD", typeof(RectTransform));
             canvasGo.layer = LayerMask.NameToLayer("UI");
@@ -527,6 +1199,29 @@ namespace EternalSleep.EditorTools
 
             var hud = canvasGo.AddComponent<HealthHUD>();
             SetRefs(hud, ("hearts", hearts), ("fullHeart", art.HeartFull), ("emptyHeart", art.HeartEmpty));
+
+            if (!collectibles) return;
+            var tears = NewUI("Lagrimas", canvasGo.transform);
+            tears.anchorMin = tears.anchorMax = tears.pivot = new Vector2(0f, 1f);
+            tears.anchoredPosition = new Vector2(13f, -34f);
+            tears.sizeDelta = new Vector2(90f, 18f);
+            var icon = NewUI("Icono", tears);
+            icon.anchorMin = icon.anchorMax = icon.pivot = new Vector2(0f, 0.5f);
+            icon.sizeDelta = new Vector2(13f, 16f);
+            var iconImg = icon.gameObject.AddComponent<UnityEngine.UI.Image>();
+            iconImg.sprite = art.Clips["lagrima_idle"][0];
+            iconImg.raycastTarget = false;
+            var label = NewUI("Texto", tears);
+            label.anchorMin = label.anchorMax = label.pivot = new Vector2(0f, 0.5f);
+            label.anchoredPosition = new Vector2(18f, 0f);
+            label.sizeDelta = new Vector2(70f, 18f);
+            var text = label.gameObject.AddComponent<TextMeshProUGUI>();
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontAssetPath);
+            if (font != null) text.font = font;
+            text.fontSize = 12f;
+            text.alignment = TextAlignmentOptions.MidlineLeft;
+            text.raycastTarget = false;
+            SetRefs(canvasGo.AddComponent<CollectibleCounter>(), ("label", text), ("icon", icon));
         }
 
         // ---------- Build Settings ----------
@@ -550,28 +1245,14 @@ namespace EternalSleep.EditorTools
             var groundTop = PixelArt.SaveSprite(ArtFolder, "ground_top", GroundTexture(true), 0, TilePPU);
             var groundFill = PixelArt.SaveSprite(ArtFolder, "ground_fill", GroundTexture(false), 0, TilePPU);
             a.Ground = SaveRuleTile("ground", groundTop, groundFill);
+            a.GroundSecret = SaveRuleTile("ground_secret", groundTop, groundFill, Tile.ColliderType.None);
             a.Platform = SaveTile("platform", PixelArt.SaveSprite(ArtFolder, "platform", PlatformTexture(), 0, TilePPU), Tile.ColliderType.Sprite);
             a.Spike = SaveTile("spikes", PixelArt.SaveSprite(ArtFolder, "spikes", SpikeTexture(), 0, TilePPU), Tile.ColliderType.Sprite);
 
-            a.Walker = new[]
-            {
-                PixelArt.SaveSprite(ArtFolder, "sombra_0", WalkerTexture(0), 0, TilePPU, bottomCenter),
-                PixelArt.SaveSprite(ArtFolder, "sombra_1", WalkerTexture(1), 0, TilePPU, bottomCenter),
-            };
-            a.Flyer = new[]
-            {
-                PixelArt.SaveSprite(ArtFolder, "polilla_0", FlyerTexture(0), 0, TilePPU),
-                PixelArt.SaveSprite(ArtFolder, "polilla_1", FlyerTexture(1), 0, TilePPU),
-            };
             a.Portal = Enumerable.Range(0, 3)
                 .Select(i => PixelArt.SaveSprite(ArtFolder, "portal_" + i, PortalTexture(i), 0, TilePPU, bottomCenter))
                 .ToArray();
 
-            a.Shooter = new[]
-            {
-                PixelArt.SaveSprite(ArtFolder, "vigia_0", ShooterTexture(0), 0, TilePPU, bottomCenter),
-                PixelArt.SaveSprite(ArtFolder, "vigia_1", ShooterTexture(1), 0, TilePPU, bottomCenter),
-            };
             a.Orb = new[]
             {
                 PixelArt.SaveSprite(ArtFolder, "orbe_0", OrbTexture(0), 0, TilePPU),
@@ -582,6 +1263,22 @@ namespace EternalSleep.EditorTools
                 ".o.", "oyo", "oyo", "oyo", "oyo", ".o.", "...", ".o.", "oyo", ".o.",
             }, ('o', PixelArt.Ink), ('y', PixelArt.Gold)), 0, TilePPU, bottomCenter);
             a.OrbPrefab = SaveOrbPrefab(a.Orb);
+
+            CreateCreatureClips();
+            CreateVillageClips();
+            a.Vignette = PixelArt.SaveSprite(ArtFolder, "muerte_vineta", VillageArt.Vignette(), 0, 100f);
+            var mask = VillageArt.BrokenMask();
+            a.MaskLeft = PixelArt.SaveSprite(ArtFolder, "muerte_mascara_izq", mask.left, 0, 100f);
+            a.MaskRight = PixelArt.SaveSprite(ArtFolder, "muerte_mascara_der", mask.right, 0, 100f);
+            a.Mote = PixelArt.SaveSprite(ArtFolder, "muerte_mota", PixelArt.FromPattern(new[] { ".w.", "www", ".w." }, ('w', Color.white)), 0, 100f);
+            a.SleepZ = PixelArt.SaveSprite(ArtFolder, "zzz", CreatureArt.SleepZ(), 0, CreatureArt.PPU);
+            a.Prompt = PixelArt.SaveSprite(ArtFolder, "hablar", CreatureArt.TalkBubble(), 0, CreatureArt.PPU, new Vector2(0.5f, 0f));
+            a.DialoguePanel = PixelArt.SaveSprite(ArtFolder, "dialogo_panel",
+                PixelArt.Box(12, 12, PixelArt.Lilac, PixelArt.WithAlpha(PixelArt.Deep, 0.94f), PixelArt.Mid, PixelArt.Ink), 3, 100f);
+            a.DialogueNext = PixelArt.SaveSprite(ArtFolder, "dialogo_siguiente", PixelArt.FromPattern(new[]
+            {
+                "ooooooo", "oyyyyyo", ".oyyyo.", "..oyo..", "...o...",
+            }, ('o', PixelArt.Ink), ('y', PixelArt.Gold)), 0, 100f);
 
             a.HeartFull = PixelArt.SaveSprite(ArtFolder, "heart_full", HeartTexture(true));
             a.HeartEmpty = PixelArt.SaveSprite(ArtFolder, "heart_empty", HeartTexture(false));
@@ -595,6 +1292,35 @@ namespace EternalSleep.EditorTools
                 HillsTexture(48, 34f, 4f, 2f, 2f, PixelArt.Deep, PixelArt.Base), 0, TilePPU);
             a.Fog = PixelArt.SaveSprite(ArtFolder, "bg_fog", PixelArt.Fog(), 0, TilePPU);
             return a;
+        }
+
+        /// <summary>Dibuja y guarda todas las animaciones de enemigos (con silueta para el destello) y aldeanos.</summary>
+        private static void CreateCreatureClips()
+        {
+            clipPaths.Clear();
+            var feet = new Vector2(0.5f, 0f);
+            foreach (var clip in new[] { "idle", "walk", "run", "windup", "lunge", "hurt" })
+                SaveClip("sombra_" + clip, CreatureArt.ShadowClip(clip), feet, true, CreatureArt.EnemyPPU);
+            foreach (var clip in new[] { "fly", "flyfast", "windup", "swoop", "hurt" })
+                SaveClip("polilla_" + clip, CreatureArt.MothClip(clip), new Vector2(0.5f, 0.5f), true, CreatureArt.EnemyPPU);
+            foreach (var clip in new[] { "idle", "aim", "shoot", "hurt" })
+                SaveClip("vigia_" + clip, CreatureArt.WatcherClip(clip), feet, true, CreatureArt.EnemyPPU);
+        }
+
+        private static void SaveClip(string name, Texture2D[] frames, Vector2 pivot, bool flash, float ppu = CreatureArt.PPU)
+        {
+            const string folder = ArtFolder + "/Creatures";
+            var paths = new string[frames.Length];
+            var flashPaths = new string[frames.Length];
+            for (int i = 0; i < frames.Length; i++)
+            {
+                if (flash)
+                    flashPaths[i] = AssetDatabase.GetAssetPath(PixelArt.SaveSprite(folder, $"{name}_flash_{i}",
+                        SpritePainter.Silhouette(frames[i]), 0, ppu, pivot));
+                paths[i] = AssetDatabase.GetAssetPath(PixelArt.SaveSprite(folder, $"{name}_{i}", frames[i], 0, ppu, pivot));
+            }
+            clipPaths[name] = paths;
+            if (flash) clipPaths[name + "_flash"] = flashPaths;
         }
 
         /// <summary>Prefab del orbe que dispara el Vigía (Assets/Levels/Art/Prefabs/DreamOrb.prefab).</summary>
@@ -638,24 +1364,25 @@ namespace EternalSleep.EditorTools
         }
 
         /// <summary>Suelo que elige solo la pieza: con borde si no tiene nada encima, relleno si sí.</summary>
-        private static RuleTile SaveRuleTile(string name, Sprite top, Sprite fill)
+        private static RuleTile SaveRuleTile(string name, Sprite top, Sprite fill, Tile.ColliderType collider = Tile.ColliderType.Grid)
         {
             Directory.CreateDirectory(TilesFolder);
             string path = $"{TilesFolder}/{name}.asset";
-            var tile = AssetDatabase.LoadAssetAtPath<RuleTile>(path);
+            var tile = AssetDatabase.LoadAssetAtPath<GroundRuleTile>(path);
             if (tile == null)
             {
-                tile = ScriptableObject.CreateInstance<RuleTile>();
+                if (AssetDatabase.LoadAssetAtPath<Object>(path) != null) AssetDatabase.DeleteAsset(path); // era un RuleTile normal
+                tile = ScriptableObject.CreateInstance<GroundRuleTile>();
                 AssetDatabase.CreateAsset(tile, path);
             }
 
             tile.m_DefaultSprite = fill;
-            tile.m_DefaultColliderType = Tile.ColliderType.Grid;
+            tile.m_DefaultColliderType = collider;
 
             var topRule = new RuleTile.TilingRule
             {
                 m_Sprites = new[] { top },
-                m_ColliderType = Tile.ColliderType.Grid,
+                m_ColliderType = collider,
                 m_NeighborPositions = new List<Vector3Int> { new Vector3Int(0, 1, 0) },
                 m_Neighbors = new List<int> { RuleTile.TilingRuleOutput.Neighbor.NotThis },
             };
@@ -725,56 +1452,6 @@ namespace EternalSleep.EditorTools
             return t;
         }
 
-        /// <summary>"Sombra": mancha oscura con ojos dorados. El cuadro 1 está un poco aplastado.</summary>
-        private static Texture2D WalkerTexture(int frame)
-        {
-            const int w = 16, h = 12;
-            float rx = frame == 0 ? 7f : 7.5f, ry = frame == 0 ? 5.5f : 5f, cy = frame == 0 ? 5.5f : 5f;
-            bool Inside(int x, int y) => y >= 0 && y < h && x >= 0 && x < w &&
-                                         Sq((x - 7.5f) / rx) + Sq((y - cy) / ry) <= 1f;
-
-            var t = PixelArt.Solid(w, h, Color.clear);
-            for (int x = 0; x < w; x++)
-            for (int y = 0; y < h; y++)
-            {
-                if (!Inside(x, y)) continue;
-                if (y == 0 && (x + frame) % 3 == 0) continue; // patitas que se mueven
-                bool edge = !Inside(x - 1, y) || !Inside(x + 1, y) || !Inside(x, y + 1) || (y > 0 && !Inside(x, y - 1));
-                Color c = edge ? PixelArt.Ink : PixelArt.Base;
-                if (!edge && (y - cy) / ry > 0.35f && (x - 7.5f) / rx < -0.1f) c = PixelArt.Mid; // brillo
-                t.SetPixel(x, y, c);
-            }
-
-            int ey = frame == 0 ? 6 : 5;
-            foreach (int ex in new[] { 4, 10 })
-            {
-                t.SetPixel(ex, ey, PixelArt.Gold);
-                t.SetPixel(ex + 1, ey, PixelArt.Gold);
-                t.SetPixel(ex, ey + 1, PixelArt.Moon);
-                t.SetPixel(ex + 1, ey + 1, PixelArt.Gold);
-            }
-            return t;
-        }
-
-        /// <summary>"Polilla" de luz: cuerpo claro y alas que aletean entre los dos cuadros.</summary>
-        private static Texture2D FlyerTexture(int frame)
-        {
-            var t = PixelArt.Solid(16, 16, Color.clear);
-            float upperRy = frame == 0 ? 3f : 1.5f, upperCy = frame == 0 ? 10.5f : 9f;
-            float lowerRy = frame == 0 ? 2f : 1.2f;
-
-            Ellipse(t, 4f, upperCy, 3.5f, upperRy, PixelArt.WithAlpha(PixelArt.Lilac, 0.9f));
-            Ellipse(t, 11f, upperCy, 3.5f, upperRy, PixelArt.WithAlpha(PixelArt.Lilac, 0.9f));
-            Ellipse(t, 4.5f, 5f, 2.5f, lowerRy, PixelArt.Soft);
-            Ellipse(t, 10.5f, 5f, 2.5f, lowerRy, PixelArt.Soft);
-            Ellipse(t, 7.5f, 7.5f, 1.5f, 4f, PixelArt.Pale);
-            t.SetPixel(7, 11, PixelArt.Gold);
-            t.SetPixel(8, 11, PixelArt.Gold);
-            t.SetPixel(7, 12, PixelArt.Moon);
-            t.SetPixel(8, 12, PixelArt.Moon);
-            return t;
-        }
-
         /// <summary>Portal ovalado con un remolino que gira entre los 3 cuadros.</summary>
         private static Texture2D PortalTexture(int frame)
         {
@@ -799,31 +1476,6 @@ namespace EternalSleep.EditorTools
                 int y = Mathf.RoundToInt(15.5f + Mathf.Sin(a) * s * 15f);
                 if (x >= 0 && x < w && y >= 0 && y < h) t.SetPixel(x, y, s < 0.35f ? PixelArt.Moon : PixelArt.Soft);
             }
-            return t;
-        }
-
-        /// <summary>"Vigía": un ojo grande sobre un pedestal. El cuadro 1 parpadea.</summary>
-        private static Texture2D ShooterTexture(int frame)
-        {
-            var t = PixelArt.Solid(16, 16, Color.clear);
-            // pedestal
-            for (int x = 4; x < 12; x++)
-            for (int y = 0; y < 5; y++)
-                t.SetPixel(x, y, x == 4 || x == 11 || y == 4 ? PixelArt.Ink : PixelArt.Base);
-            // ojo
-            for (int x = 0; x < 16; x++)
-            for (int y = 4; y < 16; y++)
-            {
-                float r = Mathf.Sqrt(Sq((x - 7.5f) / 6.5f) + Sq((y - 10f) / 5.5f));
-                if (r > 1f) continue;
-                Color c = r > 0.85f ? PixelArt.Ink : PixelArt.Moon;
-                if (frame == 1 && r <= 0.85f) c = y > 10 ? PixelArt.Mid : PixelArt.Moon; // párpado medio cerrado
-                t.SetPixel(x, y, c);
-            }
-            // iris y pupila (mira a la izquierda; el script lo voltea)
-            for (int x = 3; x < 8; x++)
-            for (int y = 8; y < 12; y++)
-                t.SetPixel(x, y, (x == 4 || x == 5) && (y == 9 || y == 10) ? PixelArt.Ink : PixelArt.Rose);
             return t;
         }
 
