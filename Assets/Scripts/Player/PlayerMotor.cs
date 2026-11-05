@@ -12,6 +12,17 @@ namespace EternalSleep.Player
     {
         [Header("Movimiento")]
         [SerializeField] private float moveSpeed = 6f;
+        [Tooltip("Qué tan rápido alcanza la velocidad máxima en el suelo (unidades/s²).")]
+        [SerializeField] private float groundAcceleration = 70f;
+        [Tooltip("Qué tan rápido frena al soltar la dirección en el suelo.")]
+        [SerializeField] private float groundDeceleration = 90f;
+        [Tooltip("Aceleración en el aire (menor = menos control en el aire).")]
+        [SerializeField] private float airAcceleration = 45f;
+
+        [Header("Gravedad")]
+        [Tooltip("Gravedad extra al caer (salto más pesado, estilo metroidvania).")]
+        [SerializeField] private float fallGravityMultiplier = 1.6f;
+        [SerializeField] private float maxFallSpeed = 20f;
 
         [Header("Salto")]
         [SerializeField] private float jumpForce = 13f;
@@ -37,6 +48,7 @@ namespace EternalSleep.Player
         private float lastJumpPressedTime = float.NegativeInfinity;
         private float knockbackUntil = float.NegativeInfinity; // mientras dure, no se controla el movimiento
         private float noJumpCutUntil = float.NegativeInfinity;  // impulsos hacia arriba que no se cortan al soltar salto
+        private float baseGravityScale;
 
         public Vector2 Velocity => rb.linearVelocity;
         public bool IsGrounded { get; private set; }
@@ -51,6 +63,7 @@ namespace EternalSleep.Player
             col = GetComponent<Collider2D>();
             input = GetComponent<PlayerInputReader>();
             rb.freezeRotation = true;
+            baseGravityScale = rb.gravityScale;
 
             groundFilter = new ContactFilter2D { useTriggers = false };
             groundFilter.SetLayerMask(groundLayer);
@@ -91,6 +104,7 @@ namespace EternalSleep.Player
             UpdateGround();
             Move();
             Jump();
+            ApplyGravity();
         }
 
         private void UpdateGround()
@@ -119,7 +133,11 @@ namespace EternalSleep.Player
             if (Time.time < knockbackUntil) return;
 
             float x = input.Horizontal;
-            rb.linearVelocity = new Vector2(x * moveSpeed, rb.linearVelocity.y);
+            float target = x * moveSpeed;
+            bool accelerating = Mathf.Abs(x) > 0.01f;
+            float rate = !IsGrounded ? airAcceleration : accelerating ? groundAcceleration : groundDeceleration;
+            float vx = Mathf.MoveTowards(rb.linearVelocity.x, target, rate * Time.fixedDeltaTime);
+            rb.linearVelocity = new Vector2(vx, rb.linearVelocity.y);
 
             if (Mathf.Abs(x) > 0.01f) FacingDirection = x > 0f ? 1 : -1;
         }
@@ -141,6 +159,13 @@ namespace EternalSleep.Player
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
             }
+        }
+
+        private void ApplyGravity()
+        {
+            rb.gravityScale = rb.linearVelocity.y < 0f ? baseGravityScale * fallGravityMultiplier : baseGravityScale;
+            if (rb.linearVelocity.y < -maxFallSpeed)
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, -maxFallSpeed);
         }
 
 #if UNITY_EDITOR

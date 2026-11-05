@@ -50,6 +50,7 @@ namespace EternalSleep.Player
 
             attack = new InputAction("Attack", InputActionType.Button);
             attack.AddBinding("<Keyboard>/j");
+            attack.AddBinding("<Keyboard>/z");
             attack.AddBinding("<Mouse>/leftButton");
             attack.AddBinding("<Gamepad>/buttonWest");
 
