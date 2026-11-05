@@ -40,6 +40,7 @@ namespace EternalSleep.Enemies
         private SpriteRenderer sprite;
         private EnemySenses senses;
         private EnemyHealth health;
+        private SpriteFlipbook anim;
         private Vector2 home;
         private Vector2 push;
         private Vector2 swoopTarget;
@@ -54,6 +55,7 @@ namespace EternalSleep.Enemies
             sprite = GetComponentInChildren<SpriteRenderer>();
             senses = GetComponent<EnemySenses>();
             health = GetComponent<EnemyHealth>();
+            anim = GetComponent<SpriteFlipbook>();
             home = transform.position;
             phase = Random.Range(0f, Mathf.PI * 2f);
 
@@ -147,6 +149,14 @@ namespace EternalSleep.Enemies
             rb.MovePosition(pos + step + push * Time.fixedDeltaTime);
 
             if (sprite != null && Mathf.Abs(step.x) > 0.001f) sprite.flipX = step.x > 0f;
+
+            if (anim != null)
+            {
+                if (push.sqrMagnitude > 4f) anim.Play("hurt");
+                else if (state == State.Windup) anim.Play("windup");
+                else if (state == State.Swoop) anim.Play("swoop");
+                else anim.Play(state == State.Chase || state == State.Flee ? "flyfast" : "fly");
+            }
         }
     }
 }

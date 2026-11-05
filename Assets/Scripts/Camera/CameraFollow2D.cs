@@ -19,8 +19,16 @@ namespace EternalSleep.CameraSystem
 
         private Camera cam;
         private Vector3 velocity;
+        private Vector3 smoothed;   // posición sin la sacudida
+        private float shakeAmount;
+        private float shakeUntil;
+        private float shakeDuration;
 
-        private void Awake() => cam = GetComponent<Camera>();
+        private void Awake()
+        {
+            cam = GetComponent<Camera>();
+            smoothed = transform.position;
+        }
 
         private void Start()
         {
@@ -29,7 +37,7 @@ namespace EternalSleep.CameraSystem
                 var player = FindAnyObjectByType<PlayerMotor>();
                 if (player != null) target = player.transform;
             }
-            if (target != null) transform.position = Desired();
+            if (target != null) smoothed = transform.position = Desired();
         }
 
         /// <summary>Limita la cámara a este rectángulo del mundo.</summary>
@@ -37,13 +45,27 @@ namespace EternalSleep.CameraSystem
         {
             bounds = area;
             useBounds = true;
-            if (target != null) transform.position = Desired();
+            if (target != null) smoothed = transform.position = Desired();
         }
+
+        /// <summary>Sacude la cámara (golpes). Se va apagando sola.</summary>
+        public void Shake(float amount, float seconds)
+        {
+            if (amount < CurrentShake) return;
+            shakeAmount = amount;
+            shakeDuration = Mathf.Max(0.01f, seconds);
+            shakeUntil = Time.unscaledTime + seconds;
+        }
+
+        private float CurrentShake => Time.unscaledTime < shakeUntil
+            ? shakeAmount * (shakeUntil - Time.unscaledTime) / shakeDuration
+            : 0f;
 
         private void LateUpdate()
         {
-            if (target == null) return;
-            transform.position = Vector3.SmoothDamp(transform.position, Desired(), ref velocity, smoothTime);
+            if (target != null)
+                smoothed = Vector3.SmoothDamp(smoothed, Desired(), ref velocity, smoothTime);
+            transform.position = smoothed + (Vector3)(Random.insideUnitCircle * CurrentShake);
         }
 
         private Vector3 Desired()

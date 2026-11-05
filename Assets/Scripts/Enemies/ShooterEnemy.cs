@@ -25,9 +25,16 @@ namespace EternalSleep.Enemies
         [SerializeField, Range(0f, 1f)] private float leadFactor = 0.5f;
         [SerializeField] private Vector2 muzzleOffset = new Vector2(0f, 0.5f);
         [SerializeField] private GameObject alertIcon;
+        [Tooltip("Cada cuántos disparos lanza un abanico de 3 orbes (0 = nunca).")]
+        [SerializeField] private int spreadEvery = 3;
+        [SerializeField] private float spreadAngle = 18f;
 
         private EnemySenses senses;
         private SpriteRenderer sprite;
+        private SpriteFlipbook anim;
+        private int shots;
+        private float shotAnimUntil;
+        private float hurtUntil;
         private State state = State.Scan;
         private float stateUntil;
         private int facing = -1;
@@ -38,11 +45,16 @@ namespace EternalSleep.Enemies
         {
             senses = GetComponent<EnemySenses>();
             sprite = GetComponentInChildren<SpriteRenderer>();
+            anim = GetComponent<SpriteFlipbook>();
             if (alertIcon != null) alertIcon.SetActive(false);
             Enter(State.Scan, scanFlipTime);
 
             var health = GetComponent<EnemyHealth>();
-            if (health != null) health.Damaged += _ => { if (state == State.Aim) Enter(State.Cooldown, cooldown); };
+            if (health != null) health.Damaged += _ =>
+            {
+                hurtUntil = Time.time + 0.3f;
+                if (state == State.Aim) Enter(State.Cooldown, cooldown);
+            };
         }
 
         private void Enter(State next, float duration)
@@ -79,12 +91,12 @@ namespace EternalSleep.Enemies
                     break;
             }
 
-            if (sprite != null)
+            if (sprite != null) sprite.flipX = facing > 0;
+            if (anim != null)
             {
-                sprite.flipX = facing > 0;
-                // Brilla más fuerte mientras apunta.
-                float glow = state == State.Aim ? 0.75f + 0.25f * Mathf.Sin(Time.time * 30f) : 1f;
-                sprite.color = new Color(glow, glow, glow, sprite.color.a);
+                if (Time.time < hurtUntil) anim.Play("hurt");
+                else if (Time.time < shotAnimUntil) anim.Play("shoot");
+                else anim.Play(state == State.Aim ? "aim" : "idle");
             }
         }
 
@@ -98,8 +110,16 @@ namespace EternalSleep.Enemies
             float flight = Vector2.Distance(muzzle, target) / projectileSpeed;
             target += playerVelocity * (flight * leadFactor);
 
-            var orb = Instantiate(projectilePrefab, muzzle, Quaternion.identity);
-            orb.Launch((target - muzzle).normalized * projectileSpeed);
+            Vector2 dir = (target - muzzle).normalized;
+            shots++;
+            shotAnimUntil = Time.time + 0.25f;
+
+            bool spread = spreadEvery > 0 && shots % spreadEvery == 0;
+            for (int i = spread ? -1 : 0; i <= (spread ? 1 : 0); i++)
+            {
+                var orb = Instantiate(projectilePrefab, muzzle, Quaternion.identity);
+                orb.Launch((Vector2)(Quaternion.Euler(0f, 0f, i * spreadAngle) * dir) * projectileSpeed);
+            }
         }
     }
 }

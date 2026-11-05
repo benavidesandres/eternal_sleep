@@ -32,6 +32,8 @@ namespace EternalSleep.Player
         /// <summary>(vida actual, vida máxima)</summary>
         public event Action<int, int> HealthChanged;
         public event Action Died;
+        /// <summary>Recibió daño (posición desde donde vino el golpe). Para efectos visuales.</summary>
+        public event Action<Vector2> Damaged;
 
         private void Awake()
         {
@@ -68,6 +70,7 @@ namespace EternalSleep.Player
         public void TakeDamage(int amount, Vector2 from)
         {
             if (IsDead || IsInvulnerable) return;
+            Damaged?.Invoke(from);
             if (!Damage(amount)) return;
 
             float dir = Mathf.Sign(transform.position.x - from.x);
@@ -79,6 +82,7 @@ namespace EternalSleep.Player
         public void HazardHit(int amount = 1)
         {
             if (IsDead) return;
+            if (!IsInvulnerable) Damaged?.Invoke(transform.position + Vector3.down);
             bool alive = IsInvulnerable || Damage(amount);
             if (alive) motor.Teleport(lastSafePosition);
         }

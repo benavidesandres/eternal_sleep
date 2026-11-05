@@ -46,6 +46,7 @@ namespace EternalSleep.Enemies
         private SpriteRenderer sprite;
         private EnemySenses senses;
         private EnemyHealth health;
+        private SpriteFlipbook anim;
         private int groundMask;
 
         private State state = State.Patrol;
@@ -62,6 +63,7 @@ namespace EternalSleep.Enemies
             sprite = GetComponentInChildren<SpriteRenderer>();
             senses = GetComponent<EnemySenses>();
             health = GetComponent<EnemyHealth>();
+            anim = GetComponent<SpriteFlipbook>();
             groundMask = LayerMask.GetMask("Ground");
             baseScale = transform.localScale;
 
@@ -144,6 +146,7 @@ namespace EternalSleep.Enemies
                         if (health != null && health.IsWeak) Enter(State.Flee, fleeTime);
                         else Enter(State.Chase);
                     }
+                    PlayAnim(0f);
                     return;
 
                 case State.Flee:
@@ -155,6 +158,22 @@ namespace EternalSleep.Enemies
 
             if (speed > 0f) rb.MovePosition(rb.position + Vector2.right * (facing * speed * Time.fixedDeltaTime));
             if (sprite != null) sprite.flipX = facing > 0;
+            PlayAnim(speed);
+        }
+
+        /// <summary>Elige la animación según el estado (el arte mira a la izquierda).</summary>
+        private void PlayAnim(float speed)
+        {
+            if (anim == null) return;
+            switch (state)
+            {
+                case State.Hurt: anim.Play("hurt"); break;
+                case State.LungeWindup: anim.Play("windup"); break;
+                case State.Lunge: anim.Play("lunge"); break;
+                case State.Chase:
+                case State.Flee: anim.Play(speed > 0f ? "run" : "idle"); break;
+                default: anim.Play(speed > 0f ? "walk" : "idle"); break;
+            }
         }
 
         /// <summary>¿Hay pared delante o falta suelo delante?</summary>
