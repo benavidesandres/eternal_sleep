@@ -25,8 +25,9 @@ Asignación actual (los originales están en `ArtIA/originales/`):
 | 5 | biblioteca (`fondo_biblioteca.jpg`) |
 | 6 | pueblo (`fondo_pueblo.jpg`) |
 
-El suelo, el relleno, la plataforma y los pinchos (`ground_top.png`, `ground_fill.png`, `platform.png`,
-`spikes.png`) están recortados de `originales/tileset.jpg`.
+El suelo, las plataformas y los pinchos ya no usan arte IA: se dibujan por código en
+`Assets/Editor/GroundArt.cs`, porque la superficie tiene que tocar justo el borde de la casilla.
+Los recortes anteriores están en `originales/suelo_anterior/`.
 
 ## Cómo se adapta la imagen
 
@@ -71,10 +72,6 @@ Para texturas que se repiten (suelo, fondos) cambia el final por:
 
 | Archivo | Tamaño final | Prompt (después del estilo base, con el final de texturas) |
 |---|---|---|
-| `ground_top.png` | 16×16 | ground tile with a glowing lavender grass edge on top, dark purple soil below |
-| `ground_fill.png` | 16×16 | dark purple soil tile with small darker specks |
-| `platform.png` | 16×16 | thin floating dream platform in the top third of the tile, lavender top, transparent below |
-| `spikes.png` | 16×16 | row of four pale crystal spikes on the bottom half of the tile, transparent above |
 | `bg_stars.png` | 64×48 | sparse starfield, tiny white and lilac stars on transparent background |
 | `bg_hills_far.png` | 64×64 | distant rolling hills silhouette, muted purple, transparent sky above |
 | `bg_hills_near.png` | 64×48 | closer rolling hills silhouette, very dark purple, transparent sky above |

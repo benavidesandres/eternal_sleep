@@ -15,6 +15,9 @@ namespace EternalSleep.Effects
 
         public static bool Busy { get; private set; }
 
+        /// <summary>Si se paró el juego a mitad de un fundido, Busy quedaría en true y las puertas dejarían de funcionar.</summary>
+        public static void ResetState() => Busy = false;
+
         private static ScreenFade Get()
         {
             if (instance != null) return instance;

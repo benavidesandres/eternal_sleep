@@ -31,6 +31,7 @@ namespace EternalSleep.UI
         public void Play()
         {
             GameSettings.Save();
+            GameSession.NewGame();
             SceneManager.LoadScene(firstLevelBuildIndex);
         }
 

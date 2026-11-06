@@ -39,11 +39,23 @@ namespace EternalSleep.Player
         {
             motor = GetComponent<PlayerMotor>();
             sprite = GetComponentInChildren<SpriteRenderer>();
+            maxHealth += PlayerUpgrades.BonusHearts;
             Current = maxHealth;
             lastSafePosition = transform.position;
         }
 
+        private void OnEnable() => PlayerUpgrades.HeartAdded += OnHeartAdded;
+        private void OnDisable() => PlayerUpgrades.HeartAdded -= OnHeartAdded;
+
         private void Start() => HealthChanged?.Invoke(Current, maxHealth);
+
+        /// <summary>Corazón nuevo: sube la vida máxima y deja a Kael curado del todo.</summary>
+        private void OnHeartAdded()
+        {
+            maxHealth++;
+            Current = maxHealth;
+            HealthChanged?.Invoke(Current, maxHealth);
+        }
 
         private void FixedUpdate()
         {

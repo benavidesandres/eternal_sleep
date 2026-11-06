@@ -17,11 +17,13 @@ namespace EternalSleep.Player
 
         public event Action JumpPressed;
         public event Action AttackPressed;
+        public event Action DashPressed;
 
         private InputAction move;
         private InputAction aim;
         private InputAction jump;
         private InputAction attack;
+        private InputAction dash;
 
         private void Awake()
         {
@@ -54,7 +56,13 @@ namespace EternalSleep.Player
             attack.AddBinding("<Mouse>/leftButton");
             attack.AddBinding("<Gamepad>/buttonWest");
 
+            dash = new InputAction("Dash", InputActionType.Button);
+            dash.AddBinding("<Keyboard>/leftShift");
+            dash.AddBinding("<Keyboard>/k");
+            dash.AddBinding("<Gamepad>/rightShoulder");
+
             jump.performed += _ => JumpPressed?.Invoke();
+            dash.performed += _ => DashPressed?.Invoke();
             attack.performed += _ => AttackPressed?.Invoke();
         }
 
@@ -64,6 +72,7 @@ namespace EternalSleep.Player
             aim.Enable();
             jump.Enable();
             attack.Enable();
+            dash.Enable();
         }
 
         private void OnDisable()
@@ -72,6 +81,7 @@ namespace EternalSleep.Player
             aim.Disable();
             jump.Disable();
             attack.Disable();
+            dash.Disable();
             Horizontal = 0f;
             Vertical = 0f;
         }
@@ -82,6 +92,7 @@ namespace EternalSleep.Player
             aim?.Dispose();
             jump?.Dispose();
             attack?.Dispose();
+            dash?.Dispose();
         }
 
         private void Update()

@@ -34,6 +34,9 @@ namespace EternalSleep.Village
 
         private static readonly Dictionary<string, int> talkCount = new Dictionary<string, int>();
 
+        /// <summary>Partida nueva: olvida cuántas veces se habló con cada uno.</summary>
+        public static void ResetTalks() => talkCount.Clear();
+
         private InputAction interact;
         private Transform player;
         private bool playerInRange;

@@ -185,7 +185,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EternalSleep.Player.PlayerMotor
   moveSpeed: 6
-  jumpForce: 13
+  jumpForce: 15
   jumpCutMultiplier: 0.5
   coyoteTime: 0.1
   jumpBufferTime: 0.1

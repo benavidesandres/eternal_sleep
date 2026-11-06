@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EternalSleep.Enemies;
 using EternalSleep.Player;
+using EternalSleep.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -18,8 +19,8 @@ namespace EternalSleep.Dream
     /// - Al cargar el sueño aplica variaciones con esa semilla: quita algunos enemigos,
     ///   añade plataformas extra y apaga/enciende los objetos marcados con DreamVariant.
     ///   Si mueres, el sueño se recarga con la misma semilla (mismo diseño).
-    /// - CompleteDream(): al llegar al portal, el aldeano queda despierto y vuelves al pueblo
-    ///   junto a él.
+    /// - CompleteDream(): al llegar al portal, el aldeano queda despierto, vuelves al pueblo
+    ///   junto a él y te regala la siguiente mejora (PlayerUpgrades).
     ///
     /// Se crea solo la primera vez que se usa y sobrevive a los cambios de escena.
     /// </summary>
@@ -50,6 +51,7 @@ namespace EternalSleep.Dream
         private string lastDreamScene;
         private int currentSeed;
         private Vector2? returnPosition;
+        private Upgrade? pendingReward;
         private bool transitioning;
         private Image fade;
 
@@ -80,6 +82,13 @@ namespace EternalSleep.Dream
             instance.currentDreamer = null;
             instance.currentDreamScene = null;
             instance.returnPosition = null;
+        }
+
+        /// <summary>Partida nueva: todos vuelven a dormir.</summary>
+        public static void ResetProgress()
+        {
+            awakened.Clear();
+            ClearDream();
         }
 
         private void Awake()
@@ -136,7 +145,9 @@ namespace EternalSleep.Dream
         public void CompleteDream()
         {
             if (transitioning) return;
-            if (currentDreamer != null) awakened.Add(currentDreamer);
+            if (currentDreamer != null && awakened.Add(currentDreamer) &&
+                PlayerUpgrades.GrantNextWakeReward(out var reward))
+                pendingReward = reward;
             currentDreamer = null;
             currentDreamScene = null;
             StartCoroutine(FadeAndLoad(hubSceneName));
@@ -171,6 +182,10 @@ namespace EternalSleep.Dream
             yield return null; // espera a que la escena nueva arranque
             yield return Fade(1f, 0f);
             transitioning = false;
+
+            if (pendingReward.HasValue && DialogueBox.Instance != null)
+                DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(pendingReward.Value), null, null);
+            pendingReward = null;
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -216,7 +231,7 @@ namespace EternalSleep.Dream
         }
 
         /// <summary>
-        /// Añade plataformas de un solo sentido en el aire, a 3 casillas sobre el suelo.
+        /// Añade plataformas de un solo sentido en el aire, a 2 o 3 casillas sobre el suelo (siempre al alcance del salto).
         /// Solo añade (nunca quita), y se atraviesan desde abajo, así que no pueden bloquear el camino.
         /// </summary>
         private void AddExtraPlatforms(System.Random rng)
@@ -244,7 +259,7 @@ namespace EternalSleep.Dream
                 int width = rng.Next(2, 4);
                 int top = GroundTop(ground, x, b);
                 if (top == int.MinValue) continue;
-                int y = top + 3 + rng.Next(0, 2);
+                int y = top + 2 + rng.Next(0, 2);
 
                 bool free = true;
                 for (int dx = -1; dx <= width && free; dx++)

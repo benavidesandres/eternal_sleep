@@ -31,6 +31,9 @@ namespace EternalSleep.UI
         /// <summary>Momento (tiempo real) en que se cerró por última vez; evita reabrirla con la misma tecla.</summary>
         public static float LastClosedTime { get; private set; } = float.NegativeInfinity;
 
+        /// <summary>Partida nueva. Time.unscaledTime vuelve a 0 en cada Play y este valor no debe quedar en el futuro.</summary>
+        public static void ResetTimers() => LastClosedTime = float.NegativeInfinity;
+
         private InputAction confirm, cancel, navigate;
         private bool open;
         private float lastNav;

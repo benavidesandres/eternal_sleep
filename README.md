@@ -11,7 +11,8 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 | Acción | Teclado | Mando |
 |---|---|---|
 | Moverse | A / D o ← / → | Stick izquierdo |
-| Saltar | Espacio | A |
+| Saltar (y doble salto en el aire) | Espacio | A |
+| Paso de Sombra (impulso) | Shift izquierdo o K | RB |
 | Atacar | J, Z o clic izquierdo | X |
 | Atacar arriba / abajo | Mantener W / S al atacar | Stick arriba / abajo |
 | Hablar con un aldeano | W, ↑ o E (junto a él) | Y |
@@ -26,9 +27,14 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
   murmuran en sueños y al final puedes elegir entrar en su sueño:
   es una pesadilla al azar (uno de los niveles) con variaciones —menos enemigos, plataformas extra—.
   Al llegar al portal, el aldeano despierta y vuelves al pueblo a su lado.
+- **Mejoras:** cada aldeano que despiertas te regala algo, en este orden: **Alas de Polilla** (doble salto),
+  **Paso de Sombra** (impulso, también en el aire) y un **Corazón de Luna** (+1 corazón).
+- **Zonas bloqueadas:** la torre corta la calle: sin doble salto no se llega al barrio del cementerio
+  (quinto aldeano, Ash y más Lágrimas). El **mausoleo** está sellado por un velo de sombra que solo cruza
+  el impulso, y dentro hay un abismo y una cornisa que piden las dos mejoras; al final espera otro Corazón de Luna.
 - También hay **aldeanos despiertos** con los que conversar: Vesna la farolera, Grim el mercader,
   Lune y Ash el sepulturero (y un gato negro). Sus pistas ayudan a encontrar los secretos.
-- **Lágrimas de Luna:** 7 coleccionables repartidos por el pueblo (contador bajo los corazones).
+- **Lágrimas de Luna:** 8 coleccionables repartidos por el pueblo (contador bajo los corazones).
   Algunas están en lo alto; una está muy bien escondida.
 - **Secretos:** hay easter eggs en objetos con los que se puede hablar (y algunos cambian si
   insistes). No todo lo que parece pared lo es.
@@ -96,10 +102,14 @@ Cada carácter es una casilla:
 | `A` `W` `R` `D` | Estatua, pozo, lápida rara y diario (se puede hablar con ellos) |
 | `C` | Lágrima de Luna |
 | `X` | Pared falsa (parece suelo, se atraviesa). `c` y `m` = lágrima y espejo escondidos dentro |
+| `I` `T` | Piedra grabada y inscripción (pistas de las zonas bloqueadas) |
 | `L` `g` | Farola y lápida decorativa |
+| `B` | Velo de sombra (pared que solo cruza el impulso). Si cierra una sala, se le pone muro de fondo |
+| `H` | Corazón de Luna (+1 corazón máximo) |
 | `.` | Vacío |
 
-El jugador salta unas **3 casillas de alto** y **5 de largo**. Después de editar un mapa,
+El jugador salta **3 casillas de alto** (llega justo a 3; a 4 ya no) y **5 de largo**. Con doble salto sube
+**6** y cruza unas **9**. Para bloquear una zona con doble salto, ponla a 4-6 casillas de altura. Después de editar un mapa,
 usa **Eternal Sleep → Construir niveles**. Para agregar un nivel, crea `Level_07.txt`
 (cualquier escena `Level_*` entra automáticamente en el sorteo de pesadillas).
 El pueblo es `Hub.txt`; si no tiene fondo propio usa el de `Level_06`.
@@ -109,6 +119,8 @@ Para que un objeto de un sueño aparezca solo a veces, añádele el componente *
 
 - **Fondo de cada nivel:** `Assets/Levels/Backgrounds/Level_XX.jpg` (o `.png`).
   Sin imagen, se usa un cielo con estrellas y colinas generado por código.
+- **Suelo, plataformas, pinchos y velo:** dibujados por código en `Assets/Editor/GroundArt.cs`, con la superficie
+  justo en el borde de la casilla para que nada flote. Se generan en `Assets/Levels/Art/Suelo/`.
 - **Arte con IA:** pon PNGs en `ArtIA/` con el nombre del sprite que reemplazan
   (`ground_top.png`, `sombra_0.png`…). Se les quita el fondo y se ajustan solos.
   Nombres, tamaños y prompts en [`ArtIA/PROMPTS.md`](ArtIA/PROMPTS.md).
@@ -122,11 +134,11 @@ Assets/
   Levels/            Mapas de texto, fondos y arte generado de los niveles
   Scenes/            MainMenu, Levels/Hub y Level_01..06, SampleScene (pruebas)
   Scripts/
-    Player/          Movimiento, salto, ataque, vida
+    Player/          Movimiento, salto, impulso, ataque, vida y mejoras
     Enemies/         IA de enemigos (Sombra, Polilla, Vigía) y sus sentidos
-    LevelSystem/     Pinchos, portal, cambio de nivel, parallax
+    LevelSystem/     Pinchos, portal, cambio de nivel, parallax, reinicio de partida
     DreamSystem/     Pueblo ↔ sueños: aldeanos dormidos, pesadilla al azar y sus variaciones
-    Village/         Aldeanos que hablan, Lágrimas de Luna, paredes falsas, luces que titilan
+    Village/         Aldeanos que hablan, Lágrimas de Luna, paredes falsas, velos de sombra, luces que titilan
     Camera/          Cámara que sigue al jugador
     UI/              Menú principal, opciones, corazones
   UI/                Fuente y sprites del menú

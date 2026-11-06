@@ -12,8 +12,11 @@ namespace EternalSleep.Player
         Vector2 Velocity { get; }
         bool IsGrounded { get; }
         int FacingDirection { get; } // 1 = derecha, -1 = izquierda
+        bool IsDashing { get; }
 
         event Action Jumped;
         event Action Landed;
+        event Action AirJumped;
+        event Action Dashed;
     }
 }

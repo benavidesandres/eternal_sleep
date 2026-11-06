@@ -231,6 +231,7 @@ namespace EternalSleep.EditorTools
             var motor = go.AddComponent<PlayerMotor>();
             go.AddComponent<PlayerAttack>();
             var anim = go.AddComponent<PlayerAnimator>();
+            go.AddComponent<PlayerAbilityFeedback>();
 
             var so = new SerializedObject(motor);
             so.FindProperty("groundLayer").intValue = 1 << groundLayer;

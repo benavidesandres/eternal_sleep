@@ -27,6 +27,14 @@ namespace EternalSleep.Village
             if (collected.Add(id)) Changed?.Invoke();
         }
 
+        public static void Reset()
+        {
+            collected.Clear();
+            secrets.Clear();
+            Total = 0;
+            Changed = null;
+        }
+
         /// <summary>Devuelve true la primera vez que se descubre ese secreto.</summary>
         public static bool DiscoverSecret(string id) => secrets.Add(id);
     }

@@ -30,6 +30,7 @@ namespace EternalSleep.EditorTools
     ///   E  enemigo que camina F  enemigo que vuela
     ///   S  vigía que dispara  G  portal de salida   .  vacío
     ///   N  aldeano dormido (solo en Hub.txt): al hablarle entras en su sueño
+    ///   B  velo de sombra (solo se cruza con el Paso de Sombra)   H  Corazón de Luna
     ///
     /// Hub.txt (el pueblo) se construye primero y queda justo después del menú en Build Settings.
     /// </summary>
@@ -38,6 +39,7 @@ namespace EternalSleep.EditorTools
         private const string LevelsFolder = "Assets/Levels";
         private const string ArtFolder = "Assets/Levels/Art";
         private const string TilesFolder = "Assets/Levels/Art/Tiles";
+        private const string GroundArtFolder = "Assets/Levels/Art/Suelo";
         private const string ScenesFolder = "Assets/Scenes/Levels";
         private const string MenuScenePath = "Assets/Scenes/MainMenu.unity";
         private const string HubMapPath = LevelsFolder + "/Hub.txt";
@@ -50,13 +52,13 @@ namespace EternalSleep.EditorTools
 
         private class Art
         {
-            public RuleTile Ground, GroundSecret; // GroundSecret: pared falsa (sin colisión)
-            public Tile Platform, Spike;
-            public Sprite[] Orb, Portal;
+            public RuleTile Ground, GroundSecret, Platform; // GroundSecret: pared falsa (sin colisión)
+            public Tile Spike, BackWall;
+            public Sprite[] Orb, Portal, Veil;
             public Sprite SleepZ, Prompt, DialoguePanel, DialogueNext;
             public Sprite Vignette, MaskLeft, MaskRight, Mote, DoorArrow, WhitePixel;
             public Dictionary<string, Sprite[]> Clips; // animaciones de enemigos y aldeanos (con su silueta "_flash")
-            public Sprite Alert, HeartFull, HeartEmpty, Sky, Stars, Moon, HillsFar, HillsNear, Fog;
+            public Sprite Alert, HeartFull, HeartEmpty, MoonHeart, Sky, Stars, Moon, HillsFar, HillsNear, Fog;
             public DreamOrb OrbPrefab;
         }
 
@@ -182,8 +184,13 @@ namespace EternalSleep.EditorTools
                         break;
                     case 'L': CreateLamp(Village(), art, feet); break;
                     case 'g': CreateGrave(Village(), art, feet, graves++ % 3); break;
+                    case 'B': CreateVeil(Village(), art, new Vector2(x + 0.5f, y + 0.5f)); break;
+                    case 'H': CreateMoonHeart(Village(), art, new Vector2(x + 0.5f, y + 0.5f), $"corazon_{x}_{y}"); break;
                 }
             }
+
+            ExtendGroundPastEdges(ground, art.Ground, lines);
+            PaintBackWalls(grid.transform, art.BackWall, lines);
 
             // Suelo sólido: un solo collider unido para todo el tilemap.
             ground.gameObject.AddComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
@@ -227,6 +234,74 @@ namespace EternalSleep.EditorTools
             string scenePath = $"{ScenesFolder}/{levelName}.unity";
             EditorSceneManager.SaveScene(scene, scenePath);
             return scenePath;
+        }
+
+        /// <summary>
+        /// Prolonga el suelo fuera del mapa (no se ve), para que las casillas del borde
+        /// no dibujen el canto de roca como si el mundo se acabara ahí.
+        /// </summary>
+        private static void ExtendGroundPastEdges(Tilemap ground, TileBase tile, string[] lines)
+        {
+            const int margin = 2;
+            int height = lines.Length;
+            for (int row = 0; row < height; row++)
+            {
+                int y = height - 1 - row;
+                string line = lines[row];
+                if (line.Length == 0) continue;
+                for (int i = 1; i <= margin; i++)
+                {
+                    if (line[0] == '#') ground.SetTile(new Vector3Int(-i, y, 0), tile);
+                    if (line[line.Length - 1] == '#') ground.SetTile(new Vector3Int(line.Length - 1 + i, y, 0), tile);
+                }
+            }
+
+            string bottom = lines[height - 1];
+            for (int x = -margin; x < bottom.Length + margin; x++)
+            {
+                if (bottom[Mathf.Clamp(x, 0, bottom.Length - 1)] != '#') continue;
+                for (int i = 1; i <= margin; i++) ground.SetTile(new Vector3Int(x, -i, 0), tile);
+            }
+        }
+
+        /// <summary>
+        /// Muro de fondo en las salas cerradas por un velo de sombra (el mausoleo): rellena el hueco
+        /// que hay detrás de cada velo si está rodeado de suelo. El lado que da al aire libre se descarta.
+        /// </summary>
+        private static void PaintBackWalls(Transform grid, TileBase tile, string[] lines)
+        {
+            int height = lines.Length;
+            char At(int x, int row) => row >= 0 && row < height && x >= 0 && x < lines[row].Length ? lines[row][x] : '.';
+            bool Wall(int x, int row) { char c = At(x, row); return c == '#' || c == 'B'; }
+
+            var enclosed = new HashSet<Vector2Int>();
+            for (int row = 0; row < height; row++)
+            for (int x = 0; x < lines[row].Length; x++)
+            {
+                if (lines[row][x] != 'B') continue;
+                foreach (int side in new[] { x - 1, x + 1 })
+                {
+                    var start = new Vector2Int(side, row);
+                    if (Wall(side, row) || enclosed.Contains(start)) continue;
+
+                    var seen = new HashSet<Vector2Int> { start };
+                    var open = new Stack<Vector2Int>(seen);
+                    bool escapes = false;
+                    while (open.Count > 0 && !escapes)
+                    {
+                        var c = open.Pop();
+                        escapes = c.y <= 0 || c.x <= 0 || c.x >= lines[Mathf.Clamp(c.y, 0, height - 1)].Length - 1;
+                        foreach (var n in new[] { c + Vector2Int.left, c + Vector2Int.right, c + Vector2Int.up, c + Vector2Int.down })
+                            if (!Wall(n.x, n.y) && seen.Add(n)) open.Push(n);
+                    }
+                    if (!escapes) enclosed.UnionWith(seen);
+                }
+            }
+            if (enclosed.Count == 0) return;
+
+            var map = NewTilemap("BackWall", grid, -10);
+            map.color = new Color(0.62f, 0.56f, 0.78f);
+            foreach (var c in enclosed) map.SetTile(new Vector3Int(c.x, height - 1 - c.y, 0), tile);
         }
 
         /// <summary>Guarda la ruta en disco de cada asset del arte (campo → rutas).</summary>
@@ -462,7 +537,7 @@ namespace EternalSleep.EditorTools
             var backdrop = new GameObject("Oscuridad");
             backdrop.transform.SetParent(inside, false);
             backdrop.transform.localPosition = new Vector3(7f, 3.5f, 0f);
-            backdrop.transform.localScale = new Vector3(44f, 32f, 1f);
+            backdrop.transform.localScale = new Vector3(44f, 30f, 1f); // sin llegar al cielo del pueblo
             var bsr = backdrop.AddComponent<SpriteRenderer>();
             bsr.sprite = art.WhitePixel;
             bsr.color = new Color(0.02f, 0.012f, 0.035f);
@@ -766,7 +841,8 @@ namespace EternalSleep.EditorTools
 
         /// <summary>
         /// Quién o qué hay en cada letra del mapa del pueblo:
-        /// V Vesna · O Grim · U Lune · Y Ash · K gato · A estatua · W pozo · R lápida rara · m espejo (sala secreta) · D diario.
+        /// V Vesna · O Grim · U Lune · Y Ash · K gato · A estatua · W pozo · R lápida rara · m espejo (sala secreta) · D diario
+        /// I piedra de la torre · T inscripción del mausoleo.
         /// </summary>
         private static readonly TalkerInfo[] Talkers =
         {
@@ -867,6 +943,26 @@ namespace EternalSleep.EditorTools
             },
             new TalkerInfo
             {
+                Key = 'I', Name = "Piedra grabada", Art = "obj_tumba1", Object = true,
+                Lines = new[]
+                {
+                    "\"Más allá de esta torre duermen el último aldeano y el cementerio.\"",
+                    "\"Quien solo salta una vez, que mire desde abajo.\"",
+                    "(Cada aldeano que despiertes te dejará un regalo.)",
+                },
+            },
+            new TalkerInfo
+            {
+                Key = 'T', Name = "Inscripción", Art = "obj_tumba2", Object = true,
+                Lines = new[]
+                {
+                    "\"Mausoleo de los que nunca despertaron.\"",
+                    "\"El velo no se abre con fuerza: hay que cruzarlo siendo sombra.\"",
+                    "\"Dentro aguarda el Corazón de Luna, para quien sepa saltar el abismo.\"",
+                },
+            },
+            new TalkerInfo
+            {
                 Key = 'D', Name = "Diario", Art = "obj_diario", Object = true,
                 Lines = new[]
                 {
@@ -939,6 +1035,39 @@ namespace EternalSleep.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             AddLight(go.transform, Vector2.zero, new Color(0.6f, 0.8f, 1f), hidden ? 0.35f : 0.7f, 1.7f, true);
+        }
+
+        /// <summary>Una casilla de velo de sombra: pared sólida que solo cruza el Paso de Sombra.</summary>
+        private static void CreateVeil(Transform parent, Art art, Vector2 center)
+        {
+            var go = new GameObject("VeloDeSombra");
+            go.transform.SetParent(parent, false);
+            go.transform.position = center;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = art.Veil[0];
+            sr.sortingOrder = 8;
+            SetRefs(go.AddComponent<SpriteFlipbook>(), ("frames", art.Veil));
+            go.AddComponent<BoxCollider2D>().size = Vector2.one;
+            go.AddComponent<DashVeil>();
+            AddLight(go.transform, Vector2.zero, new Color(0.55f, 0.35f, 1f), 0.6f, 1.8f, true);
+        }
+
+        private static void CreateMoonHeart(Transform parent, Art art, Vector2 center, string id)
+        {
+            var go = new GameObject("CorazonDeLuna");
+            go.transform.SetParent(parent, false);
+            go.transform.position = center;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = art.MoonHeart;
+            sr.sortingOrder = 6;
+
+            var col = go.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+            col.radius = 0.6f;
+            var heart = new SerializedObject(go.AddComponent<HeartPickup>());
+            heart.FindProperty("id").stringValue = id;
+            heart.ApplyModifiedPropertiesWithoutUndo();
+            AddLight(go.transform, Vector2.zero, new Color(1f, 0.5f, 0.65f), 0.9f, 2.4f, true);
         }
 
         private static void CreateLamp(Transform parent, Art art, Vector2 feet)
@@ -1278,6 +1407,8 @@ namespace EternalSleep.EditorTools
             sr.size = new Vector2(width, height);
         }
 
+        private const int MaxHearts = 6; // 3 iniciales + los de las mejoras (HealthHUD oculta los que sobran)
+
         private static void CreateHud(Art art, bool collectibles)
         {
             var canvasGo = new GameObject("HUD", typeof(RectTransform));
@@ -1293,13 +1424,13 @@ namespace EternalSleep.EditorTools
             var panel = NewUI("Hearts", canvasGo.transform);
             panel.anchorMin = panel.anchorMax = panel.pivot = new Vector2(0f, 1f);
             panel.anchoredPosition = new Vector2(12f, -12f);
-            panel.sizeDelta = new Vector2(120f, 16f);
+            panel.sizeDelta = new Vector2(MaxHearts * 22f, 16f);
             var layout = panel.gameObject.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
             layout.spacing = 4;
             layout.childControlWidth = layout.childControlHeight = false;
             layout.childForceExpandWidth = layout.childForceExpandHeight = false;
 
-            var hearts = new UnityEngine.UI.Image[3];
+            var hearts = new UnityEngine.UI.Image[MaxHearts];
             for (int i = 0; i < hearts.Length; i++)
             {
                 var h = NewUI("Heart" + i, panel);
@@ -1354,12 +1485,28 @@ namespace EternalSleep.EditorTools
             var a = new Art();
             var bottomCenter = new Vector2(0.5f, 0f);
 
-            var groundTop = PixelArt.SaveSprite(ArtFolder, "ground_top", GroundTexture(true), 0, TilePPU);
-            var groundFill = PixelArt.SaveSprite(ArtFolder, "ground_fill", GroundTexture(false), 0, TilePPU);
-            a.Ground = SaveRuleTile("ground", groundTop, groundFill);
-            a.GroundSecret = SaveRuleTile("ground_secret", groundTop, groundFill, Tile.ColliderType.None);
-            a.Platform = SaveTile("platform", PixelArt.SaveSprite(ArtFolder, "platform", PlatformTexture(), 0, TilePPU), Tile.ColliderType.Sprite);
-            a.Spike = SaveTile("spikes", PixelArt.SaveSprite(ArtFolder, "spikes", SpikeTexture(), 0, TilePPU), Tile.ColliderType.Sprite);
+            var groundPieces = new Sprite[16][];
+            for (int open = 0; open < groundPieces.Length; open++)
+            {
+                // Las piezas que más se ven repetidas (relleno y superficie plana) tienen variantes.
+                int variants = open == 0 || open == GroundArt.OpenUp ? GroundArt.GroundVariants : 1;
+                groundPieces[open] = new Sprite[variants];
+                for (int v = 0; v < variants; v++)
+                    groundPieces[open][v] = PixelArt.SaveSprite(GroundArtFolder, $"suelo_{open}_{v}", GroundArt.Ground(open, v), 0, GroundArt.PPU);
+            }
+            a.Ground = SaveRuleTile("ground", groundPieces, Tile.ColliderType.Grid);
+            a.GroundSecret = SaveRuleTile("ground_secret", groundPieces, Tile.ColliderType.None);
+            a.BackWall = SaveTile("back_wall", groundPieces[0][0], Tile.ColliderType.None);
+
+            var platformPieces = new Sprite[16][];
+            for (int open = 0; open < platformPieces.Length; open++)
+                platformPieces[open] = new[] { PixelArt.SaveSprite(GroundArtFolder, $"plataforma_{open & 6}", GroundArt.Platform(open), 0, GroundArt.PPU) };
+            a.Platform = SaveRuleTile("platform", platformPieces, Tile.ColliderType.Sprite);
+
+            a.Spike = SaveTile("spikes", PixelArt.SaveSprite(GroundArtFolder, "pinchos", GroundArt.Spikes(), 0, GroundArt.PPU), Tile.ColliderType.Sprite);
+            a.Veil = Enumerable.Range(0, 4)
+                .Select(i => PixelArt.SaveSprite(GroundArtFolder, "velo_" + i, GroundArt.Veil(i, 4), 0, GroundArt.PPU))
+                .ToArray();
 
             a.Portal = Enumerable.Range(0, 3)
                 .Select(i => PixelArt.SaveSprite(ArtFolder, "portal_" + i, PortalTexture(i), 0, TilePPU, bottomCenter))
@@ -1396,6 +1543,7 @@ namespace EternalSleep.EditorTools
 
             a.HeartFull = PixelArt.SaveSprite(ArtFolder, "heart_full", HeartTexture(true));
             a.HeartEmpty = PixelArt.SaveSprite(ArtFolder, "heart_empty", HeartTexture(false));
+            a.MoonHeart = PixelArt.SaveSprite(ArtFolder, "corazon_luna", HeartTexture(true), 0, 8f);
 
             a.Sky = PixelArt.SaveSprite(ArtFolder, "bg_sky", PixelArt.Sky(), 0, 4f);
             a.Stars = PixelArt.SaveSprite(ArtFolder, "bg_stars", StarsTexture(), 0, TilePPU);
@@ -1477,30 +1625,46 @@ namespace EternalSleep.EditorTools
             return tile;
         }
 
-        /// <summary>Suelo que elige solo la pieza: con borde si no tiene nada encima, relleno si sí.</summary>
-        private static RuleTile SaveRuleTile(string name, Sprite top, Sprite fill, Tile.ColliderType collider = Tile.ColliderType.Grid)
+        /// <summary>
+        /// Casilla que elige sola su pieza según qué lados tiene al aire.
+        /// pieces[máscara de GroundArt.Open*] son los sprites de esa combinación (varios = uno al azar).
+        /// </summary>
+        private static RuleTile SaveRuleTile(string name, Sprite[][] pieces, Tile.ColliderType collider)
         {
             Directory.CreateDirectory(TilesFolder);
             string path = $"{TilesFolder}/{name}.asset";
             var tile = AssetDatabase.LoadAssetAtPath<GroundRuleTile>(path);
             if (tile == null)
             {
-                if (AssetDatabase.LoadAssetAtPath<Object>(path) != null) AssetDatabase.DeleteAsset(path); // era un RuleTile normal
+                if (AssetDatabase.LoadAssetAtPath<Object>(path) != null) AssetDatabase.DeleteAsset(path); // era otro tipo de casilla
                 tile = ScriptableObject.CreateInstance<GroundRuleTile>();
                 AssetDatabase.CreateAsset(tile, path);
             }
 
-            tile.m_DefaultSprite = fill;
+            tile.m_DefaultSprite = pieces[0][0];
             tile.m_DefaultColliderType = collider;
+            tile.m_TilingRules = new List<RuleTile.TilingRule>();
 
-            var topRule = new RuleTile.TilingRule
+            var sides = new[]
             {
-                m_Sprites = new[] { top },
-                m_ColliderType = collider,
-                m_NeighborPositions = new List<Vector3Int> { new Vector3Int(0, 1, 0) },
-                m_Neighbors = new List<int> { RuleTile.TilingRuleOutput.Neighbor.NotThis },
+                (GroundArt.OpenUp, new Vector3Int(0, 1, 0)), (GroundArt.OpenLeft, new Vector3Int(-1, 0, 0)),
+                (GroundArt.OpenRight, new Vector3Int(1, 0, 0)), (GroundArt.OpenDown, new Vector3Int(0, -1, 0)),
             };
-            tile.m_TilingRules = new List<RuleTile.TilingRule> { topRule };
+            for (int open = 0; open < pieces.Length; open++)
+            {
+                var rule = new RuleTile.TilingRule
+                {
+                    m_Sprites = pieces[open],
+                    m_ColliderType = collider,
+                    m_Output = pieces[open].Length > 1 ? RuleTile.TilingRuleOutput.OutputSprite.Random : RuleTile.TilingRuleOutput.OutputSprite.Single,
+                    m_PerlinScale = 0.95f,
+                    m_NeighborPositions = sides.Select(side => side.Item2).ToList(),
+                    m_Neighbors = sides.Select(side => (open & side.Item1) != 0
+                        ? RuleTile.TilingRuleOutput.Neighbor.NotThis
+                        : RuleTile.TilingRuleOutput.Neighbor.This).ToList(),
+                };
+                tile.m_TilingRules.Add(rule);
+            }
 
             EditorUtility.SetDirty(tile);
             AssetDatabase.SaveAssets();
@@ -1508,63 +1672,6 @@ namespace EternalSleep.EditorTools
         }
 
         // ---------- Dibujos ----------
-
-        private static Texture2D GroundTexture(bool top)
-        {
-            var rng = new System.Random(top ? 3 : 5);
-            var t = PixelArt.Solid(16, 16, PixelArt.Base);
-            for (int x = 0; x < 16; x++)
-            for (int y = 0; y < 16; y++)
-                if (rng.NextDouble() < 0.08) t.SetPixel(x, y, PixelArt.Deep);
-
-            if (top)
-            {
-                for (int x = 0; x < 16; x++)
-                {
-                    t.SetPixel(x, 15, PixelArt.Lilac);
-                    t.SetPixel(x, 14, PixelArt.Soft);
-                    t.SetPixel(x, 13, rng.NextDouble() < 0.5 ? PixelArt.Mid : PixelArt.Soft);
-                    if (rng.NextDouble() < 0.3) t.SetPixel(x, 12, PixelArt.Mid);
-                }
-                t.SetPixel(4, 15, PixelArt.Pale);
-                t.SetPixel(11, 15, PixelArt.Pale);
-            }
-            return t;
-        }
-
-        private static Texture2D PlatformTexture()
-        {
-            var t = PixelArt.Solid(16, 16, Color.clear);
-            for (int x = 0; x < 16; x++)
-            {
-                t.SetPixel(x, 15, PixelArt.Lilac);
-                t.SetPixel(x, 14, PixelArt.Soft);
-                t.SetPixel(x, 13, PixelArt.Mid);
-                t.SetPixel(x, 12, PixelArt.Base);
-                if (x % 2 == 0) t.SetPixel(x, 11, PixelArt.Deep);
-            }
-            // gotas de "sueño" colgando
-            t.SetPixel(3, 10, PixelArt.Soft);
-            t.SetPixel(11, 10, PixelArt.Soft);
-            t.SetPixel(11, 9, PixelArt.Lilac);
-            return t;
-        }
-
-        private static Texture2D SpikeTexture()
-        {
-            var t = PixelArt.Solid(16, 16, Color.clear);
-            for (int s = 0; s < 4; s++)
-            for (int lx = 0; lx < 4; lx++)
-            for (int y = 0; y < 8; y++)
-            {
-                float halfWidth = 2f * (1f - y / 8f);
-                if (Mathf.Abs(lx - 1.5f) > halfWidth) continue;
-                Color c = y >= 6 ? PixelArt.Moon : (lx < 2 ? PixelArt.Pale : PixelArt.Lilac);
-                t.SetPixel(s * 4 + lx, y, c);
-            }
-            for (int x = 0; x < 16; x++) t.SetPixel(x, 0, PixelArt.Soft);
-            return t;
-        }
 
         /// <summary>Portal ovalado con un remolino que gira entre los 3 cuadros.</summary>
         private static Texture2D PortalTexture(int frame)

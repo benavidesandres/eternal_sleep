@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d2adf363ed21fc244bf420b747a3afa0
+guid: c5713f0ff01a2ff4c915f96fb04098e0
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8382717070696663976
-    second: spikes_0
+      213: 4030991348586872244
+    second: suelo_0_1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -115,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: spikes_0
+      name: suelo_0_1_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 61
-        height: 39
+        width: 64
+        height: 64
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -130,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8ab4a7323c4655470800000000000000
-      internalID: 8382717070696663976
+      spriteID: 4bd71314645f0f730800000000000000
+      internalID: 4030991348586872244
       vertices: []
       indices: 
       edges: []
@@ -150,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      spikes_0: 8382717070696663976
+      suelo_0_1_0: 4030991348586872244
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
