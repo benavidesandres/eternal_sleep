@@ -54,7 +54,7 @@ namespace EternalSleep.EditorTools
             public Tile Platform, Spike;
             public Sprite[] Orb, Portal;
             public Sprite SleepZ, Prompt, DialoguePanel, DialogueNext;
-            public Sprite Vignette, MaskLeft, MaskRight, Mote;
+            public Sprite Vignette, MaskLeft, MaskRight, Mote, DoorArrow, WhitePixel;
             public Dictionary<string, Sprite[]> Clips; // animaciones de enemigos y aldeanos (con su silueta "_flash")
             public Sprite Alert, HeartFull, HeartEmpty, Sky, Stars, Moon, HillsFar, HillsNear, Fog;
             public DreamOrb OrbPrefab;
@@ -173,7 +173,7 @@ namespace EternalSleep.EditorTools
                     case 'G': CreatePortal(art, new Vector2(x + 0.5f, y)); break;
                     case 'N':
                         if (villagers == null) villagers = new GameObject("Villagers").transform;
-                        CreateDreamer(villagers, art, new Vector2(x + 0.5f, y), ++villagerCount);
+                        CreateDreamer(villagers, art, new Vector2(x + 0.5f, y), ++villagerCount, height);
                         break;
                     case 'C':
                     case 'c':
@@ -203,6 +203,7 @@ namespace EternalSleep.EditorTools
             hazards.gameObject.AddComponent<Hazard>();
 
             if (secretCells.Count > 0) CreateSecrets(ground, secretCells);
+            if (villagerCount > 0) CreateRoom(null, "Calle", new Rect(0, 0, width, height));
 
             // Jugador
             var player = PlayerSetupEditor.CreatePlayer(controller, groundLayer);
@@ -429,25 +430,99 @@ namespace EternalSleep.EditorTools
         }
 
         /// <summary>Aldeano dormido: respira bajo su manta, le salen "Z", tiene bocadillo para hablar y su diálogo.</summary>
-        private static void CreateDreamer(Transform parent, Art art, Vector2 feet, int number)
+        /// <summary>
+        /// Casa de un aldeano, como en Hollow Knight: en la calle solo se ve la fachada con su puerta;
+        /// al entrar, la pantalla se funde y apareces en el interior (una habitación aparte, encima del mapa),
+        /// donde el aldeano duerme en su cama.
+        /// </summary>
+        private static void CreateDreamer(Transform parent, Art art, Vector2 feet, int number, int mapHeight)
         {
             var info = Villagers[(number - 1) % Villagers.Length];
             int variant = (number - 1) % VillagerVariants;
+            int groundLayer = LayerMask.NameToLayer("Ground");
 
-            // Casa en corte con su ventana iluminada, una vela y un farolito.
+            // --- Fachada en la calle.
             var house = new GameObject("Casa_" + number);
             house.transform.SetParent(parent, false);
             house.transform.position = feet;
             var hsr = house.AddComponent<SpriteRenderer>();
-            hsr.sprite = art.Clips[$"casa{variant}_idle"][0];
+            hsr.sprite = art.Clips[$"fachada{variant}_idle"][0];
             hsr.sortingOrder = -20;
-            AddLight(house.transform, new Vector2(0f, 1.75f), new Color(0.7f, 0.62f, 1f), 0.7f, 2.6f, false);
-            AddLight(house.transform, new Vector2(variant % 2 == 0 ? -1.5f : 2.25f, 2.3f), new Color(1f, 0.78f, 0.4f), 0.8f, 1.8f, true);
-            AddLight(house.transform, new Vector2(3.33f, 3.2f), new Color(1f, 0.65f, 0.3f), 0.8f, 2.2f, true);
+            AddLight(house.transform, new Vector2(-2.25f, 2.8f), new Color(1f, 0.72f, 0.38f), 0.7f, 2.2f, true);
+            AddLight(house.transform, new Vector2(2.25f, 2.8f), new Color(1f, 0.72f, 0.38f), 0.7f, 2.2f, true);
+            AddLight(house.transform, new Vector2(1.06f, 1.95f), new Color(1f, 0.65f, 0.3f), 0.9f, 2.6f, true);
 
+            // --- Interior (habitación aparte).
+            var origin = new Vector2(6f + (number - 1) * 22f, mapHeight + 12f); // suelo del interior
+            var inside = new GameObject("Interior_" + number).transform;
+            inside.SetParent(parent, false);
+            inside.position = origin;
+            CreateRoom(inside, "Habitacion", new Rect(origin.x - 0.5f, origin.y - 1f, 15f, 9f));
+
+            var backdrop = new GameObject("Oscuridad");
+            backdrop.transform.SetParent(inside, false);
+            backdrop.transform.localPosition = new Vector3(7f, 3.5f, 0f);
+            backdrop.transform.localScale = new Vector3(44f, 32f, 1f);
+            var bsr = backdrop.AddComponent<SpriteRenderer>();
+            bsr.sprite = art.WhitePixel;
+            bsr.color = new Color(0.02f, 0.012f, 0.035f);
+            bsr.sortingOrder = -40;
+
+            var room = new GameObject("Cuarto");
+            room.transform.SetParent(inside, false);
+            room.transform.localPosition = new Vector3(-0.5f, -1f, 0f);
+            var rsr = room.AddComponent<SpriteRenderer>();
+            rsr.sprite = art.Clips[$"interior{variant}_idle"][0];
+            rsr.sortingOrder = -30;
+
+            // Paredes, suelo y techo invisibles.
+            void Wall(string name, Vector2 center, Vector2 size)
+            {
+                var w = new GameObject(name);
+                w.layer = groundLayer;
+                w.transform.SetParent(inside, false);
+                w.transform.localPosition = center;
+                w.AddComponent<BoxCollider2D>().size = size;
+            }
+            Wall("Suelo", new Vector2(7f, -0.5f), new Vector2(17f, 1f));
+            Wall("ParedIzq", new Vector2(-1f, 3.5f), new Vector2(1f, 10f));
+            Wall("ParedDer", new Vector2(15f, 3.5f), new Vector2(1f, 10f));
+            Wall("Techo", new Vector2(7f, 7.25f), new Vector2(17f, 1f));
+
+            // Muebles: mesa con vela y el mueble del oficio.
+            void Furniture(string name, string clip, float x, int frames)
+            {
+                var m = new GameObject(name);
+                m.transform.SetParent(inside, false);
+                m.transform.localPosition = new Vector3(x, 0f, 0f);
+                var msr = m.AddComponent<SpriteRenderer>();
+                msr.sprite = art.Clips[clip + "_idle"][0];
+                msr.sortingOrder = -15;
+                if (frames > 1) SetClips(m.AddComponent<SpriteFlipbook>(), art, clip, false, ("idle", 3f, true));
+            }
+            Furniture("Mesa", "mesa", 4.2f, 1);
+            Furniture("Oficio", $"oficio{variant}", 12.3f, 2);
+
+            AddLight(inside, new Vector2(7.3f, 4.6f), new Color(0.65f, 0.6f, 1f), 0.6f, 3.2f, false);   // luna
+            AddLight(inside, new Vector2(4.2f, 1.7f), new Color(1f, 0.75f, 0.4f), 0.9f, 2.8f, true);    // vela
+            var propLight = new[] { new Vector2(12.3f, 1f), new Vector2(13.4f, 0.3f), new Vector2(12.3f, 2.1f), new Vector2(12.3f, 1.5f), new Vector2(12.3f, 3f) }[variant];
+            var propColor = new[] { new Color(1f, 0.5f, 0.25f), new Color(1f, 0.45f, 0.2f), new Color(1f, 0.8f, 0.45f), new Color(0.7f, 0.6f, 1f), new Color(0.8f, 0.7f, 1f) }[variant];
+            AddLight(inside, propLight, propColor, variant < 3 ? 1f : 0.4f, variant < 3 ? 3.2f : 2f, variant < 3);
+
+            // Puertas enlazadas: calle -> interior y de vuelta.
+            var arriveInside = new GameObject("LlegadaInterior").transform;
+            arriveInside.SetParent(inside, false);
+            arriveInside.localPosition = new Vector3(2.7f, 0.05f, 0f);
+            var arriveStreet = new GameObject("LlegadaCalle").transform;
+            arriveStreet.SetParent(house.transform, false);
+            arriveStreet.localPosition = new Vector3(1.3f, 0.05f, 0f);
+            CreateDoor(house.transform, art, Vector2.zero, arriveInside, 2.5f);
+            CreateDoor(inside, art, new Vector2(1.125f, 0f), arriveStreet, 3.6f);
+
+            // --- El aldeano en su cama, bajo la ventana.
             var go = new GameObject("Aldeano_" + number);
-            go.transform.SetParent(parent, false);
-            go.transform.position = feet;
+            go.transform.SetParent(inside, false);
+            go.transform.position = origin + new Vector2(7.5f, 0f);
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = art.Clips[$"aldeano{variant}_sleep"][0];
             sr.sortingOrder = 4;
@@ -456,15 +531,15 @@ namespace EternalSleep.EditorTools
 
             var col = go.AddComponent<BoxCollider2D>();
             col.isTrigger = true;
-            col.size = new Vector2(3.0f, 2.0f);
-            col.offset = new Vector2(0f, 1.0f);
+            col.size = new Vector2(3.8f, 2.4f);
+            col.offset = new Vector2(0f, 1.2f);
 
             var zs = new Object[3];
             for (int i = 0; i < zs.Length; i++)
             {
                 var z = new GameObject("Zzz" + i);
                 z.transform.SetParent(go.transform, false);
-                z.transform.localPosition = new Vector3(-0.6f, 1.1f, 0f);
+                z.transform.localPosition = new Vector3(-0.75f, 1.5f, 0f);
                 var zsr = z.AddComponent<SpriteRenderer>();
                 zsr.sprite = art.SleepZ;
                 zsr.sortingOrder = 6;
@@ -473,7 +548,7 @@ namespace EternalSleep.EditorTools
 
             var prompt = new GameObject("Hablar");
             prompt.transform.SetParent(go.transform, false);
-            prompt.transform.localPosition = new Vector3(-0.2f, 1.95f, 0f);
+            prompt.transform.localPosition = new Vector3(-0.8f, 2.3f, 0f);
             var psr = prompt.AddComponent<SpriteRenderer>();
             psr.sprite = art.Prompt;
             psr.sortingOrder = 20;
@@ -487,6 +562,39 @@ namespace EternalSleep.EditorTools
             FillStrings(so.FindProperty("sleepingLines"), info.Sleeping);
             FillStrings(so.FindProperty("awakeLines"), info.Awake);
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void CreateRoom(Transform parent, string name, Rect area)
+        {
+            var go = new GameObject(name);
+            if (parent != null) go.transform.SetParent(parent, true);
+            var room = go.AddComponent<Room>();
+            var so = new SerializedObject(room);
+            so.FindProperty("area").rectValue = area;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>Puerta con flecha dorada; lleva al jugador a "destination".</summary>
+        private static void CreateDoor(Transform parent, Art art, Vector2 local, Transform destination, float arrowHeight)
+        {
+            var go = new GameObject("Puerta");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            var col = go.AddComponent<BoxCollider2D>();
+            col.isTrigger = true;
+            col.size = new Vector2(1.3f, 2.2f);
+            col.offset = new Vector2(0f, 1.1f);
+
+            var arrow = new GameObject("Flecha");
+            arrow.transform.SetParent(go.transform, false);
+            arrow.transform.localPosition = new Vector3(0f, arrowHeight, 0f);
+            var asr = arrow.AddComponent<SpriteRenderer>();
+            asr.sprite = art.DoorArrow;
+            asr.sortingOrder = 20;
+            arrow.SetActive(false);
+
+            var door = go.AddComponent<Door>();
+            SetRefs(door, ("destination", destination), ("prompt", arrow));
         }
 
         private static void FillStrings(SerializedProperty prop, string[] values)
@@ -664,7 +772,7 @@ namespace EternalSleep.EditorTools
         {
             new TalkerInfo
             {
-                Key = 'V', Name = "Vesna, la farolera", Art = "npc_vesna", Fps = 4f, Face = true, Light = new Vector2(-0.55f, 1.65f),
+                Key = 'V', Name = "Vesna, la farolera", Art = "npc_vesna", Fps = 4f, Face = true, Light = new Vector2(-0.25f, 1.52f),
                 Lines = new[]
                 {
                     "Enciendo los faroles cada noche para que los durmientes encuentren el camino de vuelta.",
@@ -674,7 +782,7 @@ namespace EternalSleep.EditorTools
             },
             new TalkerInfo
             {
-                Key = 'O', Name = "Grim, el mercader", Art = "npc_grim", Fps = 3f, Face = true,
+                Key = 'O', Name = "Grim, el mercader", Art = "npc_grim", Fps = 3f, Face = true, Light = new Vector2(0.7f, 0.2f),
                 Lines = new[]
                 {
                     "¿Comprar? No, no... ya no vendo nada. Las monedas no sirven en los sueños.",
@@ -914,17 +1022,21 @@ namespace EternalSleep.EditorTools
         {
             var feet = new Vector2(0.5f, 0f);
             float ppu = VillageArt.PPU;
+            float npc = VillageArtHD.NpcPPU, home = VillageArtHD.HousePPU;
             for (int v = 0; v < VillagerVariants; v++)
             {
-                SaveClip($"casa{v}_idle", new[] { VillageArt.House(v) }, feet, false, ppu);
-                SaveClip($"aldeano{v}_sleep", VillageArt.Sleeping(v), feet, false, ppu);
-                SaveClip($"aldeano{v}_awake", VillageArt.AwakeInBed(v), feet, false, ppu);
+                SaveClip($"fachada{v}_idle", new[] { VillageArtHD.Facade(v) }, feet, false, home);
+                SaveClip($"interior{v}_idle", new[] { VillageArtHD.Interior(v) }, Vector2.zero, false, home);
+                SaveClip($"oficio{v}_idle", VillageArtHD.Prop(v), feet, false, home);
+                SaveClip($"aldeano{v}_sleep", VillageArtHD.Sleeping(v), feet, false, VillageArtHD.BedPPU);
+                SaveClip($"aldeano{v}_awake", VillageArtHD.Awake(v), feet, false, VillageArtHD.BedPPU);
             }
-            SaveClip("npc_vesna_idle", VillageArt.Lamplighter(), feet, false, ppu);
-            SaveClip("npc_grim_idle", VillageArt.Merchant(), feet, false, ppu);
-            SaveClip("npc_ash_idle", VillageArt.Gravedigger(), feet, false, ppu);
-            SaveClip("npc_lune_idle", VillageArt.Girl(), feet, false, ppu);
-            SaveClip("npc_gato_idle", VillageArt.Cat(), feet, false, ppu);
+            SaveClip("mesa_idle", new[] { VillageArtHD.Table() }, feet, false, home);
+            SaveClip("npc_vesna_idle", VillageArtHD.Lamplighter(), feet, false, npc);
+            SaveClip("npc_grim_idle", VillageArtHD.Merchant(), feet, false, npc);
+            SaveClip("npc_ash_idle", VillageArtHD.Gravedigger(), feet, false, npc);
+            SaveClip("npc_lune_idle", VillageArtHD.Girl(), feet, false, npc);
+            SaveClip("npc_gato_idle", VillageArtHD.Cat(), feet, false, npc);
             SaveClip("obj_estatua_idle", new[] { VillageArt.Statue() }, feet, false, ppu);
             SaveClip("obj_pozo_idle", new[] { VillageArt.Well() }, feet, false, ppu);
             for (int t = 0; t < 4; t++) SaveClip($"obj_tumba{t}_idle", new[] { VillageArt.Grave(t) }, feet, false, ppu);
@@ -1270,6 +1382,8 @@ namespace EternalSleep.EditorTools
             var mask = VillageArt.BrokenMask();
             a.MaskLeft = PixelArt.SaveSprite(ArtFolder, "muerte_mascara_izq", mask.left, 0, 100f);
             a.MaskRight = PixelArt.SaveSprite(ArtFolder, "muerte_mascara_der", mask.right, 0, 100f);
+            a.DoorArrow = PixelArt.SaveSprite(ArtFolder, "puerta_flecha", VillageArtHD.DoorArrow(), 0, VillageArtHD.NpcPPU, new Vector2(0.5f, 0f));
+            a.WhitePixel = PixelArt.SaveSprite(ArtFolder, "pixel_blanco", PixelArt.Solid(4, 4, Color.white), 0, 4f);
             a.Mote = PixelArt.SaveSprite(ArtFolder, "muerte_mota", PixelArt.FromPattern(new[] { ".w.", "www", ".w." }, ('w', Color.white)), 0, 100f);
             a.SleepZ = PixelArt.SaveSprite(ArtFolder, "zzz", CreatureArt.SleepZ(), 0, CreatureArt.PPU);
             a.Prompt = PixelArt.SaveSprite(ArtFolder, "hablar", CreatureArt.TalkBubble(), 0, CreatureArt.PPU, new Vector2(0.5f, 0f));

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 1ccb7f72db952614d8bb1ed9e1fd6573
+guid: 2b259a48e6c751441aaebd75eb87e1c3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8064256516424721126
-    second: casa3_idle_0_0
+      213: -5925923976393809688
+    second: pixel_blanco_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,9 +49,9 @@ TextureImporter:
   spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
-  alignment: 9
-  spritePivot: {x: 0.5, y: 0}
-  spritePixelsToUnits: 24
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 4
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -115,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: casa3_idle_0_0
+      name: pixel_blanco_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 168
-        height: 144
+        width: 4
+        height: 4
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -130,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6e2ef1f439ef9ef60800000000000000
-      internalID: 8064256516424721126
+      spriteID: 8e0a3155a83e2cda0800000000000000
+      internalID: -5925923976393809688
       vertices: []
       indices: 
       edges: []
@@ -150,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      casa3_idle_0_0: 8064256516424721126
+      pixel_blanco_0: -5925923976393809688
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

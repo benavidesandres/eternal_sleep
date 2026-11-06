@@ -19,7 +19,10 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 | Volver en menús | Escape | B |
 
 - Empiezas en el **pueblo (Hub)**, un mapa largo con casas, faroles, un pozo y un cementerio.
-  Cinco aldeanos duermen en sus camas atrapados en pesadillas. Háblales:
+  Cinco aldeanos duermen atrapados en pesadillas. Cada uno vive en su casa: ponte en la puerta
+  y pulsa **↑ / W** para entrar (como en Hollow Knight, el interior es una habitación aparte con
+  muebles de su oficio: el horno de la panadera, el yunque del herrero, el altar de la hermana,
+  los juguetes de Tobi y el reloj de Orren). Junto a su cama, háblales:
   murmuran en sueños y al final puedes elegir entrar en su sueño:
   es una pesadilla al azar (uno de los niveles) con variaciones —menos enemigos, plataformas extra—.
   Al llegar al portal, el aldeano despierta y vuelves al pueblo a su lado.

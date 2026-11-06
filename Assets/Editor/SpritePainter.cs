@@ -166,7 +166,9 @@ namespace EternalSleep.EditorTools
 
                 Color c = ramp.Mid;
                 bool checker = ((x + y) & 1) == 0;
+                int above = y + 1 < H && !isDirect[(y + 1) * W + x] ? mat[(y + 1) * W + x] : 0;
                 if (down == 1 || right == 1) c = ramp.Dark;                       // borde en sombra
+                else if (above != 0 && above != m) c = ramp.Dark;                  // sombra de contacto bajo otra pieza
                 else if (up == 1 || (left == 1 && up <= 3)) c = ramp.Light;        // borde iluminado
                 else if (down == 2 && checker) c = ramp.Dark;                      // tramado hacia la sombra
                 else if (up == 2 && checker) c = ramp.Light;                       // tramado hacia la luz

@@ -1,4 +1,5 @@
 using EternalSleep.Player;
+using EternalSleep.Village;
 using UnityEngine;
 
 namespace EternalSleep.CameraSystem
@@ -23,6 +24,7 @@ namespace EternalSleep.CameraSystem
         private float shakeAmount;
         private float shakeUntil;
         private float shakeDuration;
+        private Room currentRoom;
 
         private void Awake()
         {
@@ -63,6 +65,19 @@ namespace EternalSleep.CameraSystem
 
         private void LateUpdate()
         {
+            if (target != null && Room.Any)
+            {
+                // Al cambiar de habitación (entrar a una casa) la cámara corta directamente, sin deslizarse.
+                var room = Room.At(target.position);
+                if (room != null && room != currentRoom)
+                {
+                    currentRoom = room;
+                    bounds = room.Area;
+                    useBounds = true;
+                    smoothed = Desired();
+                    velocity = Vector3.zero;
+                }
+            }
             if (target != null)
                 smoothed = Vector3.SmoothDamp(smoothed, Desired(), ref velocity, smoothTime);
             transform.position = smoothed + (Vector3)(Random.insideUnitCircle * CurrentShake);
