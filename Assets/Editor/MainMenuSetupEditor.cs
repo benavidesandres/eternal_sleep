@@ -86,7 +86,7 @@ namespace EternalSleep.EditorTools
 
             // Panel de opciones
             var optionsPanel = CreateOptionsPanel(canvas.transform, font, art,
-                out var master, out var music, out var sfx, out var fullscreen, out var backButton);
+                out var master, out var music, out var sfx, out var fullscreen, out var aiDreams, out var backButton);
 
             // Lógica
             var controllerGo = new GameObject("MenuController");
@@ -96,7 +96,8 @@ namespace EternalSleep.EditorTools
                 ("mainFirstSelected", playButton.gameObject), ("optionsFirstSelected", master.gameObject));
 
             var options = controllerGo.AddComponent<OptionsMenu>();
-            SetRefs(options, ("masterSlider", master), ("musicSlider", music), ("sfxSlider", sfx), ("fullscreenToggle", fullscreen));
+            SetRefs(options, ("masterSlider", master), ("musicSlider", music), ("sfxSlider", sfx), ("fullscreenToggle", fullscreen),
+                ("aiDreamsToggle", aiDreams));
 
             UnityEventTools.AddPersistentListener(playButton.onClick, new UnityAction(controller.Play));
             UnityEventTools.AddPersistentListener(optionsButton.onClick, new UnityAction(controller.OpenOptions));
@@ -381,9 +382,9 @@ namespace EternalSleep.EditorTools
 
         private static RectTransform CreateOptionsPanel(Transform parent, TMP_FontAsset font, Art art,
             out UnityEngine.UI.Slider master, out UnityEngine.UI.Slider music, out UnityEngine.UI.Slider sfx,
-            out UnityEngine.UI.Toggle fullscreen, out UnityEngine.UI.Button back)
+            out UnityEngine.UI.Toggle fullscreen, out UnityEngine.UI.Toggle aiDreams, out UnityEngine.UI.Button back)
         {
-            var panel = CreateVerticalGroup("OptionsPanel", parent, new Vector2(300, 200), new Vector2(0, -20), 8, 16);
+            var panel = CreateVerticalGroup("OptionsPanel", parent, new Vector2(300, 226), new Vector2(0, -20), 8, 16);
             var img = panel.gameObject.AddComponent<UnityEngine.UI.Image>();
             img.sprite = art.Panel;
             img.type = UnityEngine.UI.Image.Type.Sliced;
@@ -396,6 +397,7 @@ namespace EternalSleep.EditorTools
             music = CreateSliderRow(panel, "MusicRow", "Música", font, art);
             sfx = CreateSliderRow(panel, "SfxRow", "Efectos", font, art);
             fullscreen = CreateToggleRow(panel, "FullscreenRow", "Pantalla completa", font, art);
+            aiDreams = CreateToggleRow(panel, "AIDreamsRow", "Sueños con IA (internet)", font, art);
             back = CreateButton(panel, "VolverButton", "Volver", font, art);
             return panel;
         }

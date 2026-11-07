@@ -1,0 +1,7 @@
+name = "eternal-sleep-suenos"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# Modelo gratuito de Gemini. Si Google lo cambia, pon aquí el que aparezca como gratuito en Google AI Studio.
+GEMINI_MODEL = "gemini-2.5-flash"

@@ -1,3 +1,4 @@
+using System.Linq;
 using EternalSleep.Player;
 using EternalSleep.UI;
 using UnityEngine;
@@ -89,11 +90,17 @@ namespace EternalSleep.Dream
             var box = DialogueBox.Instance;
             if (IsAwake)
             {
-                if (box != null) box.Show(displayName, awakeLines, null, null);
+                // Lo que dijo al despertar de su sueño (único para cada jugador), antes de sus frases de siempre.
+                string wake = DreamWorldManager.WakeLine(dreamerId);
+                var said = wake != null ? new[] { wake }.Concat(awakeLines).ToArray() : awakeLines;
+                if (box != null) box.Show(displayName, said, null, null);
                 return;
             }
 
             if (box == null) { EnterDream(); return; } // escena sin caja de diálogo
+
+            // Mientras murmura, se le pide a la IA (si está activada) la receta de su sueño.
+            DreamAI.Prefetch(DreamWorldManager.Instance, Request());
 
             var lines = new string[sleepingLines.Length + 1];
             sleepingLines.CopyTo(lines, 0);
@@ -104,7 +111,9 @@ namespace EternalSleep.Dream
             });
         }
 
-        private void EnterDream() => DreamWorldManager.Instance.EnterDream(dreamerId, dreamScene, transform.position);
+        private void EnterDream() => DreamWorldManager.Instance.EnterDream(dreamerId, dreamScene, transform.position, Request());
+
+        private DreamAI.Request Request() => DreamWorldManager.RequestFor(dreamerId, displayName, sleepingLines);
 
         private void OnTriggerEnter2D(Collider2D other)
         {

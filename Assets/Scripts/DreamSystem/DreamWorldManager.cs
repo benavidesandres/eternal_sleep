@@ -35,6 +35,8 @@ namespace EternalSleep.Dream
         [SerializeField] private string arenaSceneName = "Arena";
         [Tooltip("A partir de qué aldeano (1 = el primero que despiertas) su sueño termina con un jefe.")]
         [SerializeField] private int firstBossDream = 3;
+        [Tooltip("Escena vacía donde se construyen los sueños generados (únicos para cada jugador). Si no existe, se usan las Level_XX.")]
+        [SerializeField] private string generatedSceneName = "Sueno";
 
         [Header("Variaciones")]
         [Tooltip("Probabilidad de que cada enemigo siga en el sueño.")]
@@ -59,6 +61,32 @@ namespace EternalSleep.Dream
         private Upgrade? pendingReward;
         private bool transitioning;
         private Image fade;
+        private Text fadeText;
+
+        // Sueño generado actual: se guarda para que al reintentar tras morir salga el mismo.
+        private DreamAI.Request currentRequest;
+        private string currentDreamerName;
+        private DreamRecipe currentRecipe;
+        private string[] currentMap;
+        private string pendingWakeLine;
+        private string pendingWakeSpeaker;
+        private bool showIntro;
+
+        /// <summary>Cuántos aldeanos han despertado ya.</summary>
+        public static int AwakenedCount => awakened.Count;
+
+        /// <summary>Frase que dijo el aldeano al despertar de su sueño generado (o null).</summary>
+        public static string WakeLine(string dreamerId) => wakeLines.TryGetValue(dreamerId, out var l) ? l : null;
+        private static readonly Dictionary<string, string> wakeLines = new Dictionary<string, string>();
+
+        /// <summary>Lo que se le cuenta a la IA del sueño de un aldeano (la misma semilla que usará el sueño).</summary>
+        public static DreamAI.Request RequestFor(string dreamerId, string displayName, string[] sleepingLines) => new DreamAI.Request
+        {
+            aldeano = displayName,
+            murmullos = sleepingLines,
+            despiertos = awakened.Count,
+            semilla = DreamSeed.ForDream(dreamerId),
+        };
 
         /// <summary>El gestor (se crea si todavía no existe).</summary>
         public static DreamWorldManager Instance
@@ -93,6 +121,7 @@ namespace EternalSleep.Dream
         public static void ResetProgress()
         {
             awakened.Clear();
+            wakeLines.Clear();
             ClearDream();
         }
 
@@ -128,16 +157,23 @@ namespace EternalSleep.Dream
         /// <param name="dreamerId">Quién sueña (para despertarlo al terminar).</param>
         /// <param name="fixedScene">Escena concreta; vacío = pesadilla al azar.</param>
         /// <param name="returnAt">Dónde reaparece el jugador en el pueblo al volver.</param>
-        public void EnterDream(string dreamerId, string fixedScene, Vector2 returnAt)
+        /// <param name="request">Datos del aldeano para la IA (null = sin textos propios).</param>
+        public void EnterDream(string dreamerId, string fixedScene, Vector2 returnAt, DreamAI.Request request = null)
         {
             if (transitioning) return;
-            string scene = string.IsNullOrEmpty(fixedScene) ? PickRandomDream() : fixedScene;
+            bool generated = string.IsNullOrEmpty(fixedScene) && Application.CanStreamedLevelBeLoaded(generatedSceneName);
+            string scene = generated ? generatedSceneName : string.IsNullOrEmpty(fixedScene) ? PickRandomDream() : fixedScene;
             if (scene == null)
             {
                 Debug.LogError($"[Eternal Sleep] No hay escenas que empiecen por \"{dreamScenePrefix}\" en Build Settings.");
                 return;
             }
 
+            currentRequest = request ?? RequestFor(dreamerId, dreamerId, new string[0]);
+            currentDreamerName = request != null ? request.aldeano : dreamerId;
+            currentRecipe = null;
+            currentMap = null;
+            showIntro = generated;
             currentDreamer = dreamerId;
             currentDreamScene = scene;
             lastDreamScene = scene;
@@ -160,9 +196,18 @@ namespace EternalSleep.Dream
                 StartCoroutine(FadeAndLoad(arenaSceneName));
                 return;
             }
-            if (currentDreamer != null && awakened.Add(currentDreamer) &&
-                PlayerUpgrades.GrantNextWakeReward(out var reward))
-                pendingReward = reward;
+            if (currentDreamer != null && awakened.Add(currentDreamer))
+            {
+                if (PlayerUpgrades.GrantNextWakeReward(out var reward)) pendingReward = reward;
+                if (currentRecipe != null && !string.IsNullOrEmpty(currentRecipe.despertar))
+                {
+                    wakeLines[currentDreamer] = currentRecipe.despertar;
+                    pendingWakeLine = currentRecipe.despertar;
+                    pendingWakeSpeaker = currentDreamerName;
+                }
+            }
+            currentRecipe = null;
+            currentMap = null;
             currentDreamer = null;
             currentDreamScene = null;
             StartCoroutine(FadeAndLoad(hubSceneName));
@@ -174,6 +219,8 @@ namespace EternalSleep.Dream
             if (transitioning) return;
             currentDreamer = null;
             currentDreamScene = null;
+            currentRecipe = null;
+            currentMap = null;
             StartCoroutine(FadeAndLoad(hubSceneName));
         }
 
@@ -201,19 +248,58 @@ namespace EternalSleep.Dream
         {
             transitioning = true;
             yield return Fade(0f, 1f);
+            if (scene == generatedSceneName && currentMap == null) yield return PrepareGeneratedDream();
             SceneManager.LoadScene(scene);
             yield return null; // espera a que la escena nueva arranque
             yield return Fade(1f, 0f);
             transitioning = false;
 
-            if (pendingReward.HasValue && DialogueBox.Instance != null)
-                DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(pendingReward.Value), null, null);
+            if (DialogueBox.Instance == null) { pendingReward = null; pendingWakeLine = null; yield break; }
+            if (scene == generatedSceneName && showIntro && currentRecipe != null)
+            {
+                showIntro = false;
+                DialogueBox.Instance.Show(currentRecipe.titulo, currentRecipe.intro, null, null);
+            }
+
+            var reward = pendingReward;
             pendingReward = null;
+            void ShowReward(int _)
+            {
+                if (reward.HasValue) DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(reward.Value), null, null);
+            }
+            if (pendingWakeLine != null) DialogueBox.Instance.Show(pendingWakeSpeaker, new[] { pendingWakeLine }, null, ShowReward);
+            else ShowReward(0);
+            pendingWakeLine = null;
+        }
+
+        /// <summary>
+        /// Con la pantalla en negro: pide la receta a la IA (si está activada; espera unos segundos como mucho),
+        /// si no llega usa la receta sin IA, y genera el mapa comprobando que tiene solución.
+        /// </summary>
+        private IEnumerator PrepareGeneratedDream()
+        {
+            int seed = currentRequest.semilla;
+            var procedural = DreamRecipe.Procedural(seed, awakened.Count);
+            DreamRecipe fromAI = null;
+            if (DreamAI.Enabled)
+            {
+                SetFadeText("Kael se adentra en el sueño…");
+                yield return DreamAI.Get(this, currentRequest, r => fromAI = r);
+                SetFadeText("");
+            }
+
+            currentRecipe = fromAI != null ? fromAI.Sanitize(procedural) : procedural;
+            currentMap = DreamGenerator.Generate(currentRecipe, seed, DreamLibrary.Chunks, PlayerUpgrades.Has(Upgrade.DoubleJump));
+            Debug.Log($"[Eternal Sleep] Sueño de {currentDreamerName}: \"{currentRecipe.titulo}\" ({currentRecipe.tema}, " +
+                      $"{(currentRecipe.fromAI ? "con IA" : "sin IA")}, {currentMap[0].Length} casillas de largo).");
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (scene.name == currentDreamScene && scene.name != arenaSceneName) ApplyVariations(new System.Random(currentSeed));
+            if (scene.name == generatedSceneName && currentMap != null && DreamLevelBuilder.Instance != null)
+                DreamLevelBuilder.Instance.Build(currentMap, currentRecipe); // también al reintentar: el mismo sueño
+            else if (scene.name == currentDreamScene && scene.name != arenaSceneName && scene.name != generatedSceneName)
+                ApplyVariations(new System.Random(currentSeed));
             else if (scene.name == hubSceneName && returnPosition.HasValue) PlacePlayer(returnPosition.Value);
         }
 
@@ -334,6 +420,25 @@ namespace EternalSleep.Dream
             img.color = new Color(0.03f, 0.02f, 0.05f, 0f);
             img.raycastTarget = false;
             fade = img;
+
+            // Texto mientras se espera a la IA, con la pantalla en negro.
+            fadeText = new GameObject("Texto", typeof(RectTransform)).AddComponent<Text>();
+            fadeText.transform.SetParent(canvasGo.transform, false);
+            var tr = fadeText.rectTransform;
+            tr.anchorMin = tr.anchorMax = new Vector2(0.5f, 0.5f);
+            tr.sizeDelta = new Vector2(800f, 60f);
+            fadeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            fadeText.fontSize = 26;
+            fadeText.fontStyle = FontStyle.Italic;
+            fadeText.alignment = TextAnchor.MiddleCenter;
+            fadeText.color = new Color(0.85f, 0.8f, 1f, 0.9f);
+            fadeText.raycastTarget = false;
+            fadeText.text = "";
+        }
+
+        private void SetFadeText(string text)
+        {
+            if (fadeText != null) fadeText.text = text;
         }
 
         private IEnumerator Fade(float from, float to)
