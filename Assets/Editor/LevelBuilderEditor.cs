@@ -47,6 +47,9 @@ namespace EternalSleep.EditorTools
         private const string HubBackgroundFallback = "Level_06"; // el pueblo de los sueños
         private const string ArenaMapPath = LevelsFolder + "/Arena.txt";
         private const string ArenaBackgroundFallback = "Level_04"; // la catedral
+        private const string GeneratedDreamScene = "Sueno";
+        private const string DreamChunksPath = "Assets/Resources/Dreams/Tramos.txt";
+        private const string PrefabsFolder = ArtFolder + "/Prefabs";
         private const float TilePPU = 16f; // 16 píxeles = 1 casilla
         private const string FontAssetPath = "Assets/UI/Fonts/PixelifySans SDF.asset";
 
@@ -102,9 +105,15 @@ namespace EternalSleep.EditorTools
                 for (int i = 0; i < files.Length; i++)
                 {
                     EditorUtility.DisplayProgressBar("Eternal Sleep",
-                        "Construyendo " + Path.GetFileNameWithoutExtension(files[i]), (i + 1f) / (files.Length + 1f));
+                        "Construyendo " + Path.GetFileNameWithoutExtension(files[i]), (i + 1f) / (files.Length + 2f));
                     scenes.Add(BuildLevel(files[i], artPaths, controllerPath, groundLayer));
                 }
+
+                // Escena de los sueños generados (únicos para cada jugador): se guarda con un sueño de ejemplo
+                // y en el juego DreamLevelBuilder la vuelve a pintar.
+                EditorUtility.DisplayProgressBar("Eternal Sleep", "Construyendo la escena de los sueños generados", 1f);
+                var sample = DreamGenerator.Fallback(DreamGenerator.Parse(File.ReadAllText(DreamChunksPath)));
+                scenes.Add(BuildLevel(sample, GeneratedDreamScene, artPaths, controllerPath, groundLayer));
             }
             finally
             {
@@ -122,9 +131,14 @@ namespace EternalSleep.EditorTools
         private static string BuildLevel(string mapPath, Dictionary<string, string[]> paths, string controllerPath, int groundLayer)
         {
             var lines = File.ReadAllLines(mapPath).Select(l => l.TrimEnd()).Where(l => l.Length > 0).ToArray();
+            return BuildLevel(lines, Path.GetFileNameWithoutExtension(mapPath), paths, controllerPath, groundLayer);
+        }
+
+        private static string BuildLevel(string[] lines, string levelName, Dictionary<string, string[]> paths, string controllerPath, int groundLayer)
+        {
             int height = lines.Length;
             int width = lines.Max(l => l.Length);
-            string levelName = Path.GetFileNameWithoutExtension(mapPath);
+            bool generated = levelName == GeneratedDreamScene;
 
             // Abrir una escena nueva descarga de memoria el arte creado antes; se vuelve a cargar desde disco.
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -236,9 +250,10 @@ namespace EternalSleep.EditorTools
             // El pueblo un poco más oscuro para que luzcan los faroles; la arena, en penumbra.
             CreateLight(villagerCount > 0 ? 0.8f : bossSpot.HasValue ? 0.85f : 1f);
             var cam = CreateCamera(player.transform, start, bounds, bossSpot.HasValue ? 7f : 5.5f); // en la arena se ve entera
-            CreateBackground(art, cam, bounds, levelName);
+            if (generated) CreateDreamBuilder(art, cam, ground, platforms, hazards, enemies);
+            else CreateBackground(art, cam, bounds, levelName);
             CreateHud(art, collectibles > 0);
-            if (villagerCount > 0 || talkers > 0 || bossSpot.HasValue) CreateDialogueBox(art);
+            if (villagerCount > 0 || talkers > 0 || bossSpot.HasValue || generated) CreateDialogueBox(art);
             if (bossSpot.HasValue)
             {
                 CreateBossArena(enemies, art, bossSpot.Value, portal);
@@ -380,7 +395,7 @@ namespace EternalSleep.EditorTools
             return map;
         }
 
-        private static void CreateWalker(Transform parent, Art art, Vector2 feet)
+        private static GameObject CreateWalker(Transform parent, Art art, Vector2 feet)
         {
             var go = new GameObject("Sombra");
             go.transform.SetParent(parent, false);
@@ -396,9 +411,10 @@ namespace EternalSleep.EditorTools
             AddSenses(go, 6.5f, 0.2f, new Vector2(-0.5f, 0.95f)); // solo ve hacia delante
             var walker = go.AddComponent<WalkerEnemy>();
             SetRefs(walker, ("alertIcon", AddAlertIcon(go, art, 2.0f)));
+            return go;
         }
 
-        private static void CreateFlyer(Transform parent, Art art, Vector2 center)
+        private static GameObject CreateFlyer(Transform parent, Art art, Vector2 center)
         {
             var go = new GameObject("Polilla");
             go.transform.SetParent(parent, false);
@@ -413,9 +429,10 @@ namespace EternalSleep.EditorTools
             AddSenses(go, 6.5f, -1f, Vector2.zero); // ve en todas direcciones
             var flyer = go.AddComponent<FlyerEnemy>();
             SetRefs(flyer, ("alertIcon", AddAlertIcon(go, art, 1.25f)));
+            return go;
         }
 
-        private static void CreateShooter(Transform parent, Art art, Vector2 feet)
+        private static GameObject CreateShooter(Transform parent, Art art, Vector2 feet)
         {
             var go = new GameObject("Vigia");
             go.transform.SetParent(parent, false);
@@ -434,6 +451,54 @@ namespace EternalSleep.EditorTools
             var so = new SerializedObject(shooter);
             so.FindProperty("muzzleOffset").vector2Value = new Vector2(-0.4f, 1.5f);
             so.ApplyModifiedPropertiesWithoutUndo();
+            return go;
+        }
+
+        // ---------- Sueños generados ----------
+
+        /// <summary>
+        /// Prepara la escena "Sueno": prefabs de enemigos y portal, fondo y niebla pegados a la cámara,
+        /// y el DreamLevelBuilder que pinta el sueño de cada jugador al cargarla.
+        /// </summary>
+        private static void CreateDreamBuilder(Art art, Camera cam, Tilemap ground, Tilemap platforms, Tilemap hazards, Transform objects)
+        {
+            Directory.CreateDirectory(PrefabsFolder);
+            GameObject SavePrefab(GameObject go, string name)
+            {
+                var prefab = PrefabUtility.SaveAsPrefabAsset(go, $"{PrefabsFolder}/{name}.prefab");
+                Object.DestroyImmediate(go);
+                return prefab;
+            }
+            var walker = SavePrefab(CreateWalker(null, art, Vector2.zero), "Sombra");
+            var flyer = SavePrefab(CreateFlyer(null, art, Vector2.zero), "Polilla");
+            var shooter = SavePrefab(CreateShooter(null, art, Vector2.zero), "Vigia");
+            var portal = SavePrefab(CreatePortal(art, Vector2.zero), "Portal");
+
+            // Un fondo por tema (en el orden de DreamRecipe.Themes): los de los niveles hechos a mano.
+            var backgrounds = new Object[DreamRecipe.Themes.Length];
+            for (int i = 0; i < backgrounds.Length; i++) backgrounds[i] = LoadLevelBackground($"Level_{i + 1:00}");
+
+            var bg = new GameObject("FondoDelSueno");
+            bg.transform.SetParent(cam.transform, false);
+            bg.transform.localPosition = new Vector3(0f, 0f, 10f);
+            var bgSr = bg.AddComponent<SpriteRenderer>();
+            bgSr.sprite = backgrounds.OfType<Sprite>().FirstOrDefault() ?? art.Sky;
+            bgSr.sortingOrder = -100;
+
+            var fog = new GameObject("Niebla");
+            fog.transform.SetParent(cam.transform, false);
+            fog.transform.localPosition = new Vector3(0f, -cam.orthographicSize + 1.5f, 10f);
+            var fogSr = fog.AddComponent<SpriteRenderer>();
+            fogSr.sprite = art.Fog;
+            fogSr.sortingOrder = -60;
+            Tiled(fogSr, cam.orthographicSize * 2f * 16f / 9f * 1.4f, 4f);
+            fogSr.color = PixelArt.WithAlpha(Color.white, 0.3f);
+
+            var builder = new GameObject("ConstructorDelSueno").AddComponent<DreamLevelBuilder>();
+            SetRefs(builder, ("ground", ground), ("platforms", platforms), ("hazards", hazards),
+                ("groundTile", art.Ground), ("platformTile", art.Platform), ("spikeTile", art.Spike),
+                ("walkerPrefab", walker), ("flyerPrefab", flyer), ("shooterPrefab", shooter), ("portalPrefab", portal),
+                ("objectsRoot", objects), ("backgrounds", backgrounds), ("background", bgSr), ("fog", fogSr));
         }
 
         private static void AddSenses(GameObject go, float range, float minFacingDot, Vector2 eye)

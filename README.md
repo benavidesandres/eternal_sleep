@@ -28,7 +28,7 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
   muebles de su oficio: el horno de la panadera, el yunque del herrero, el altar de la hermana,
   los juguetes de Tobi y el reloj de Orren). Junto a su cama, háblales:
   murmuran en sueños y al final puedes elegir entrar en su sueño:
-  es una pesadilla al azar (uno de los niveles) con variaciones —menos enemigos, plataformas extra—.
+  es una pesadilla **única para cada jugador** (ver *Sueños únicos* más abajo).
   Al llegar al portal, el aldeano despierta y vuelves al pueblo a su lado.
 - **Mejoras:** cada aldeano que despiertas te regala algo, en este orden: **Alas de Polilla** (doble salto),
   **Paso de Sombra** (impulso, también en el aire) y un **Corazón de Luna** (+1 corazón).
@@ -95,7 +95,8 @@ Todo se genera desde el menú **Eternal Sleep** de Unity:
 | Opción | Qué hace |
 |---|---|
 | **Crear menú principal** | Crea la escena `MainMenu` (pixel art, fondo animado, opciones). |
-| **Construir niveles** | Crea una escena por cada mapa de `Assets/Levels/` y ordena Build Settings. |
+| **Construir niveles** | Crea una escena por cada mapa de `Assets/Levels/`, la escena `Sueno` de los sueños generados y ordena Build Settings. |
+| **Probar generador de sueños** | Genera 300 sueños y comprueba que todos tienen solución y no se repiten (ejemplos en `Temp/SuenosDeEjemplo`). |
 | **Configurar jugador** | Crea el Animator del jugador y lo coloca en `SampleScene` (escena de pruebas). |
 | **Empezar Play desde el menú** | Activa o desactiva que ▶ empiece siempre en el menú. |
 | **Abrir carpeta de arte IA** | Abre `ArtIA/`. |
@@ -139,6 +140,40 @@ El pueblo es `Hub.txt`; si no tiene fondo propio usa el de `Level_06`.
 La arena de los jefes es `Arena.txt` (no entra en el sorteo de pesadillas); si no tiene fondo propio usa el de `Level_04`.
 Para que un objeto de un sueño aparezca solo a veces, añádele el componente **DreamVariant**.
 
+### Sueños únicos para cada jugador
+
+Los sueños de los aldeanos ya no son siempre los mismos niveles: se **generan** al entrar, distintos para cada persona.
+Cambian la forma del nivel, los enemigos, el ambiente (fondo, color de la luz y niebla) y los textos.
+
+- **Semilla del jugador:** la primera vez que se abre el juego se crea una semilla y se guarda en el ordenador.
+  Se mezcla con el número de partida y con el aldeano: otra persona, otra partida u otro aldeano dan otro sueño.
+  Si mueres y reintentas, sale el mismo sueño.
+- **Sin IA (siempre funciona):** el juego elige tema, título y frases de sus propias listas y arma el nivel uniendo
+  **tramos** de `Assets/Resources/Dreams/Tramos.txt` (algunos al revés, como en un espejo).
+- **Con IA (gratis, opcional):** mientras el aldeano murmura, el juego pide a **Google Gemini** (plan gratuito) la
+  "receta" de su pesadilla, inspirada en lo que dice: tema, título, frases al entrar, lo que dirá al despertar,
+  enemigos, luz y a veces un tramo de nivel inventado. Hace falta montar el pequeño servidor gratuito de
+  [`server/dream-worker`](server/dream-worker/README.md) y poner su dirección en `Assets/Resources/Dreams/IA.json`.
+  Sin dirección, sin internet o sin cupo, se usa el modo sin IA (como mucho se espera 4 segundos).
+- **La IA nunca rompe el juego:** cada campo se recorta a lo permitido y el nivel completo se comprueba
+  (saltos de 3 de alto y 4 de largo) antes de jugarlo; si no tiene solución, se descarta y se genera otro.
+- **A la IA solo se le envía** el nombre del aldeano, sus murmullos, cuántos despertaste y la semilla.
+  Se puede apagar en **Opciones → Sueños con IA**.
+
+**Añadir tramos:** cada tramo empieza con una cabecera y debajo sus filas (mismo ancho, hasta 12 de alto):
+
+```
+@tramo tipo=normal temas=cueva,todos dificultad=2 vertical=1
+..............
+.....*........
+...====.......
+..?.......^^..
+##############
+```
+
+`tipo` es `inicio` (lleva `P`), `final` (lleva `G`) o `normal`. `?` es un sitio para Sombra o Vigía y `*` para una
+Polilla: el generador decide si pone enemigo según la receta. Después de editarlo, usa **Probar generador de sueños**.
+
 ### Fondos y arte
 
 - **Fondo de cada nivel:** `Assets/Levels/Backgrounds/Level_XX.jpg` (o `.png`).
@@ -161,7 +196,9 @@ Assets/
     Player/          Movimiento, salto, impulso, ataque, vida y mejoras
     Enemies/         IA de enemigos (Sombra, Polilla, Vigía) y sus sentidos
     LevelSystem/     Pinchos, portal, cambio de nivel, parallax, reinicio de partida
-    DreamSystem/     Pueblo ↔ sueños: aldeanos dormidos, pesadilla al azar y sus variaciones
+    DreamSystem/     Pueblo ↔ sueños: aldeanos dormidos y sueños generados (semilla, receta, IA, tramos)
+  Resources/Dreams/  Tramos de los sueños generados y configuración de la IA (IA.json)
+server/dream-worker/ Servidor gratuito (Cloudflare) que habla con Gemini
     Village/         Aldeanos que hablan, Lágrimas de Luna, paredes falsas, velos de sombra, luces que titilan
     Camera/          Cámara que sigue al jugador
     UI/              Menú principal, opciones, corazones

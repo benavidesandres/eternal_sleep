@@ -12,6 +12,7 @@ namespace EternalSleep.UI
         private const string MusicKey = "settings.musicVolume";
         private const string SfxKey = "settings.sfxVolume";
         private const string FullscreenKey = "settings.fullscreen";
+        private const string AIDreamsKey = "settings.aiDreams";
 
         public static float MasterVolume
         {
@@ -36,6 +37,13 @@ namespace EternalSleep.UI
         {
             get => PlayerPrefs.GetInt(FullscreenKey, 1) == 1;
             set { PlayerPrefs.SetInt(FullscreenKey, value ? 1 : 0); Apply(); }
+        }
+
+        /// <summary>Si los sueños pueden pedir ayuda a la IA (necesita internet).</summary>
+        public static bool AIDreams
+        {
+            get => PlayerPrefs.GetInt(AIDreamsKey, 1) == 1;
+            set => PlayerPrefs.SetInt(AIDreamsKey, value ? 1 : 0);
         }
 
         public static void Save() => PlayerPrefs.Save();

@@ -29,6 +29,21 @@ namespace EternalSleep.Level
 
         public Rect Bounds => bounds;
 
+        /// <summary>Cambia los límites (sueños generados al cargar la escena) y mueve las paredes invisibles.</summary>
+        public void SetBounds(Rect area)
+        {
+            bounds = area;
+            foreach (Transform wall in transform)
+            {
+                float x = wall.name == "LeftWall" ? area.xMin - 0.5f : wall.name == "RightWall" ? area.xMax + 0.5f : wall.position.x;
+                wall.position = new Vector3(x, area.center.y + 5f, 0f);
+                var box = wall.GetComponent<BoxCollider2D>();
+                if (box != null) box.size = new Vector2(1f, area.height + 30f);
+            }
+            var cam = FindAnyObjectByType<CameraFollow2D>();
+            if (cam != null) cam.SetBounds(area);
+        }
+
         private void Start()
         {
             player = FindAnyObjectByType<PlayerHealth>();

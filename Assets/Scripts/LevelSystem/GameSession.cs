@@ -26,6 +26,7 @@ namespace EternalSleep
         public static void NewGame()
         {
             DreamWorldManager.ResetProgress();
+            DreamSeed.NextGame(); // cada partida, sueños distintos
             CollectibleTracker.Reset();
             TalkingNPC.ResetTalks();
             DialogueBox.ResetTimers();
