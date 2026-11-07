@@ -140,6 +140,7 @@ namespace EternalSleep.EditorTools
             Transform villagers = null, village = null;
             int villagerCount = 0, talkers = 0, collectibles = 0, graves = 0;
             var secretCells = new List<Vector3Int>();
+            var crackedCells = new List<Vector3Int>();
             Transform Village() => village != null ? village : (village = new GameObject("Pueblo").transform);
 
             for (int row = 0; row < height; row++)
@@ -186,6 +187,10 @@ namespace EternalSleep.EditorTools
                     case 'g': CreateGrave(Village(), art, feet, graves++ % 3); break;
                     case 'B': CreateVeil(Village(), art, new Vector2(x + 0.5f, y + 0.5f)); break;
                     case 'H': CreateMoonHeart(Village(), art, new Vector2(x + 0.5f, y + 0.5f), $"corazon_{x}_{y}"); break;
+                    case '1': CreateUpgradePickup(Village(), art, new Vector2(x + 0.5f, y + 0.5f), Upgrade.WallJump); break;
+                    case '2': CreateUpgradePickup(Village(), art, new Vector2(x + 0.5f, y + 0.5f), Upgrade.GroundSlam); break;
+                    case '3': CreateUpgradePickup(Village(), art, new Vector2(x + 0.5f, y + 0.5f), Upgrade.ChargedAttack); break;
+                    case '%': crackedCells.Add(cell); break;
                 }
             }
 
@@ -210,6 +215,7 @@ namespace EternalSleep.EditorTools
             hazards.gameObject.AddComponent<Hazard>();
 
             if (secretCells.Count > 0) CreateSecrets(ground, secretCells);
+            if (crackedCells.Count > 0) CreateCrackedFloors(grid.transform, art, crackedCells, groundLayer);
             if (villagerCount > 0) CreateRoom(null, "Calle", new Rect(0, 0, width, height));
 
             // Jugador
@@ -1108,10 +1114,11 @@ namespace EternalSleep.EditorTools
         }
 
         /// <summary>Agrupa las casillas de pared falsa que se tocan y crea una zona secreta por grupo.</summary>
-        private static void CreateSecrets(Tilemap ground, List<Vector3Int> cells)
+        /// <summary>Separa las casillas en grupos de casillas vecinas (arriba, abajo, izquierda, derecha).</summary>
+        private static List<List<Vector3Int>> ConnectedGroups(List<Vector3Int> cells)
         {
+            var groups = new List<List<Vector3Int>>();
             var left = new HashSet<Vector3Int>(cells);
-            int n = 0;
             while (left.Count > 0)
             {
                 var group = new List<Vector3Int>();
@@ -1126,7 +1133,51 @@ namespace EternalSleep.EditorTools
                     foreach (var d in new[] { Vector3Int.left, Vector3Int.right, Vector3Int.up, Vector3Int.down })
                         if (left.Remove(c + d)) queue.Enqueue(c + d);
                 }
+                groups.Add(group);
+            }
+            return groups;
+        }
 
+        /// <summary>Suelo agrietado ('%'): suelo sólido más oscuro que solo rompe el golpe al suelo.</summary>
+        private static void CreateCrackedFloors(Transform grid, Art art, List<Vector3Int> cells, int groundLayer)
+        {
+            int n = 0;
+            foreach (var group in ConnectedGroups(cells))
+            {
+                var map = NewTilemap("SueloAgrietado_" + (++n), grid, 0);
+                map.gameObject.layer = groundLayer;
+                map.color = new Color(0.7f, 0.62f, 0.8f);
+                foreach (var c in group) map.SetTile(c, art.Ground);
+                map.gameObject.AddComponent<TilemapCollider2D>();
+                map.gameObject.AddComponent<BreakableFloor>();
+            }
+        }
+
+        private static void CreateUpgradePickup(Transform parent, Art art, Vector2 center, Upgrade upgrade)
+        {
+            var go = new GameObject("Mejora_" + upgrade);
+            go.transform.SetParent(parent, false);
+            go.transform.position = center;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = art.Orb[0]; // de momento usa el orbe de sueño, teñido
+            sr.color = new Color(0.8f, 0.7f, 1f);
+            sr.sortingOrder = 6;
+            SetRefs(go.AddComponent<SpriteFlipbook>(), ("frames", art.Orb));
+
+            var col = go.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+            col.radius = 0.6f;
+            var pickup = new SerializedObject(go.AddComponent<UpgradePickup>());
+            pickup.FindProperty("upgrade").enumValueIndex = (int)upgrade;
+            pickup.ApplyModifiedPropertiesWithoutUndo();
+            AddLight(go.transform, Vector2.zero, new Color(0.7f, 0.6f, 1f), 0.9f, 2.4f, true);
+        }
+
+        private static void CreateSecrets(Tilemap ground, List<Vector3Int> cells)
+        {
+            int n = 0;
+            foreach (var group in ConnectedGroups(cells))
+            {
                 int minX = group.Min(c => c.x), maxX = group.Max(c => c.x);
                 int minY = group.Min(c => c.y), maxY = group.Max(c => c.y);
                 var go = new GameObject("Secreto_" + (++n));

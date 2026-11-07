@@ -14,9 +14,11 @@ namespace EternalSleep.Player
         public float Horizontal { get; private set; }
         public float Vertical { get; private set; }
         public bool JumpHeld => jump.IsPressed();
+        public bool AttackHeld => attack.IsPressed();
 
         public event Action JumpPressed;
         public event Action AttackPressed;
+        public event Action AttackReleased;
         public event Action DashPressed;
 
         private InputAction move;
@@ -64,6 +66,7 @@ namespace EternalSleep.Player
             jump.performed += _ => JumpPressed?.Invoke();
             dash.performed += _ => DashPressed?.Invoke();
             attack.performed += _ => AttackPressed?.Invoke();
+            attack.canceled += _ => AttackReleased?.Invoke();
         }
 
         private void OnEnable()

@@ -5,8 +5,9 @@ using UnityEngine;
 namespace EternalSleep.Player
 {
     /// <summary>
-    /// Solo física: mover el Rigidbody2D, saltar, impulsarse y detectar suelo.
-    /// El doble salto y el impulso solo funcionan si PlayerUpgrades dice que ya se consiguieron.
+    /// Solo física: mover el Rigidbody2D, saltar, impulsarse y detectar suelo y paredes.
+    /// El doble salto, el impulso, el salto de pared y el golpe al suelo solo funcionan
+    /// si PlayerUpgrades dice que ya se consiguieron.
     /// No tiene ninguna referencia al Animator ni al SpriteRenderer.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(PlayerInputReader))]
@@ -44,6 +45,24 @@ namespace EternalSleep.Player
         [Tooltip("Tiempo mínimo entre impulsos. En el aire además hay que tocar suelo para recargarlo.")]
         [SerializeField] private float dashCooldown = 0.4f;
 
+        [Header("Pared (mejora)")]
+        [Tooltip("Velocidad máxima de caída mientras se desliza por una pared.")]
+        [SerializeField] private float wallSlideSpeed = 2.5f;
+        [Tooltip("Impulso del salto de pared: X hacia el lado contrario a la pared, Y hacia arriba.")]
+        [SerializeField] private Vector2 wallJumpForce = new Vector2(9f, 14f);
+        [Tooltip("Tiempo sin control horizontal tras saltar de la pared (para no pegarse otra vez al instante).")]
+        [SerializeField] private float wallJumpLockTime = 0.15f;
+        [Tooltip("Tiempo extra para saltar justo después de soltarse de la pared.")]
+        [SerializeField] private float wallCoyoteTime = 0.1f;
+        [SerializeField] private float wallCheckDistance = 0.08f;
+
+        [Header("Golpe al suelo (mejora)")]
+        [Tooltip("Pausa en el aire antes de caer en picado.")]
+        [SerializeField] private float slamHangTime = 0.08f;
+        [SerializeField] private float slamSpeed = 24f;
+        [Tooltip("Cuánto hay que empujar hacia abajo al pulsar el impulso para hacer el golpe al suelo.")]
+        [SerializeField, Range(0.1f, 1f)] private float slamDownThreshold = 0.5f;
+
         [Header("Suelo")]
         [SerializeField] private LayerMask groundLayer = ~0;
         [SerializeField] private float groundCheckDistance = 0.08f;
@@ -69,15 +88,24 @@ namespace EternalSleep.Player
         private float dashForcedEndAt;
         private float nextDashAt = float.NegativeInfinity;
 
+        private float lastWallTime = float.NegativeInfinity;
+        private int lastWallDirection;
+        private float moveLockUntil = float.NegativeInfinity; // tras el salto de pared: sin control horizontal
+        private float slamFallsAt;
+
         public Vector2 Velocity => rb.linearVelocity;
         public bool IsGrounded { get; private set; }
         public int FacingDirection { get; private set; } = 1;
         public bool IsDashing { get; private set; }
+        public bool IsWallSliding { get; private set; }
+        public bool IsSlamming { get; private set; }
 
         public event Action Jumped;
         public event Action Landed;
         public event Action AirJumped;
         public event Action Dashed;
+        public event Action WallJumped;
+        public event Action<Vector2> Slammed;
 
         private void Awake()
         {
@@ -102,6 +130,8 @@ namespace EternalSleep.Player
             input.JumpPressed -= OnJumpPressed;
             input.DashPressed -= OnDashPressed;
             EndDash();
+            IsSlamming = false;
+            IsWallSliding = false;
         }
 
         private void OnJumpPressed() => lastJumpPressedTime = Time.time;
@@ -111,6 +141,7 @@ namespace EternalSleep.Player
         public void ApplyKnockback(Vector2 velocity, float duration)
         {
             EndDash();
+            IsSlamming = false;
             rb.linearVelocity = velocity;
             knockbackUntil = Time.time + duration;
             noJumpCutUntil = Time.time + duration;
@@ -126,21 +157,53 @@ namespace EternalSleep.Player
             dashReady = true;
         }
 
+        /// <summary>Pequeño avance hacia donde mira (último golpe del combo).</summary>
+        public void Lunge(float speed, float duration)
+        {
+            if (IsDashing || IsSlamming || Time.time < knockbackUntil) return;
+            rb.linearVelocity = new Vector2(FacingDirection * speed, rb.linearVelocity.y);
+            moveLockUntil = Mathf.Max(moveLockUntil, Time.time + duration);
+        }
+
         /// <summary>Mueve al jugador a un punto y lo deja quieto.</summary>
         public void Teleport(Vector2 position)
         {
             EndDash();
+            IsSlamming = false;
             rb.position = position;
             transform.position = position;
             rb.linearVelocity = Vector2.zero;
             knockbackUntil = float.NegativeInfinity;
         }
 
+        /// <summary>
+        /// Empieza el golpe al suelo (abajo + impulso en el aire). Devuelve false si ahora no se puede
+        /// (sin la mejora, en el suelo, ya cayendo en picado o empujado por un golpe).
+        /// </summary>
+        public bool StartGroundSlam()
+        {
+            if (!PlayerUpgrades.Has(Upgrade.GroundSlam)) return false;
+            if (IsGrounded || IsSlamming || Time.time < knockbackUntil) return false;
+
+            EndDash();
+            IsSlamming = true;
+            IsWallSliding = false;
+            slamFallsAt = Time.time + slamHangTime;
+            lastJumpPressedTime = float.NegativeInfinity;
+            rb.linearVelocity = Vector2.zero;
+            return true;
+        }
+
         private void FixedUpdate()
         {
             UpdateGround();
+            UpdateWall();
             UpdateDash();
-            if (!IsDashing)
+            if (IsSlamming)
+            {
+                UpdateSlam();
+            }
+            else if (!IsDashing)
             {
                 Move();
                 Jump();
@@ -172,11 +235,60 @@ namespace EternalSleep.Player
                 dashReady = true;
             }
             if (!wasGrounded && IsGrounded) Landed?.Invoke();
+
+            if (IsGrounded && IsSlamming)
+            {
+                IsSlamming = false;
+                Slammed?.Invoke(new Vector2(b.center.x, b.min.y));
+            }
+        }
+
+        private void UpdateWall()
+        {
+            IsWallSliding = false;
+            if (!PlayerUpgrades.Has(Upgrade.WallJump) || IsGrounded || IsDashing || IsSlamming) return;
+            if (Time.time < knockbackUntil || Time.time < moveLockUntil) return;
+
+            float x = input.Horizontal;
+            if (Mathf.Abs(x) <= 0.01f) return;
+            int side = x > 0f ? 1 : -1;
+            if (!TouchingWall(side)) return;
+
+            // Solo se agarra cayendo: mientras sube, sigue subiendo pegado a la pared.
+            if (rb.linearVelocity.y > 0f) return;
+
+            IsWallSliding = true;
+            FacingDirection = side;
+            lastWallTime = Time.time;
+            lastWallDirection = side;
+            airJumpReady = true; // agarrarse a una pared recarga las mejoras, como tocar suelo
+            dashReady = true;
+        }
+
+        private bool TouchingWall(int side)
+        {
+            Bounds b = col.bounds;
+            float edge = side > 0 ? b.max.x : b.min.x;
+            Vector2 center = new Vector2(edge + side * wallCheckDistance * 0.5f, b.center.y);
+            Vector2 size = new Vector2(wallCheckDistance, b.size.y * 0.8f);
+
+            int count = Physics2D.OverlapBox(center, size, 0f, groundFilter, groundHits);
+            for (int i = 0; i < count; i++)
+            {
+                // Las plataformas de un solo sentido no cuentan como pared.
+                if (groundHits[i] != col && !groundHits[i].usedByEffector) return true;
+            }
+            return false;
+        }
+
+        private void UpdateSlam()
+        {
+            rb.linearVelocity = Time.time < slamFallsAt ? Vector2.zero : new Vector2(0f, -slamSpeed);
         }
 
         private void Move()
         {
-            if (Time.time < knockbackUntil) return;
+            if (Time.time < knockbackUntil || Time.time < moveLockUntil) return;
 
             float x = input.Horizontal;
             float target = x * moveSpeed;
@@ -200,6 +312,18 @@ namespace EternalSleep.Player
                 lastGroundedTime = float.NegativeInfinity;
                 IsGrounded = false;
                 Jumped?.Invoke();
+            }
+            else if (wantsJump && Time.time - lastWallTime <= wallCoyoteTime && Time.time >= knockbackUntil)
+            {
+                // Salto de pared: hacia arriba y hacia el lado contrario a la pared.
+                rb.linearVelocity = new Vector2(-lastWallDirection * wallJumpForce.x, wallJumpForce.y);
+                FacingDirection = -lastWallDirection;
+                lastJumpPressedTime = float.NegativeInfinity;
+                lastWallTime = float.NegativeInfinity;
+                moveLockUntil = Time.time + wallJumpLockTime;
+                noJumpCutUntil = Time.time + wallJumpLockTime;
+                IsWallSliding = false;
+                WallJumped?.Invoke();
             }
             else if (wantsJump && airJumpReady && Time.time >= knockbackUntil && PlayerUpgrades.Has(Upgrade.DoubleJump))
             {
@@ -228,7 +352,15 @@ namespace EternalSleep.Player
                 return;
             }
 
+            if (IsSlamming) return;
             bool wantsDash = Time.time - lastDashPressedTime <= jumpBufferTime;
+
+            // Abajo + impulso en el aire: golpe al suelo (si se tiene la mejora) en lugar del impulso.
+            if (wantsDash && input.Vertical < -slamDownThreshold && StartGroundSlam())
+            {
+                lastDashPressedTime = float.NegativeInfinity;
+                return;
+            }
             if (!wantsDash || !dashReady || Time.time < nextDashAt || Time.time < knockbackUntil) return;
             if (!PlayerUpgrades.Has(Upgrade.Dash)) return;
 
@@ -254,14 +386,15 @@ namespace EternalSleep.Player
 
         private void ApplyGravity()
         {
-            if (IsDashing)
+            if (IsDashing || IsSlamming)
             {
                 rb.gravityScale = 0f;
                 return;
             }
             rb.gravityScale = rb.linearVelocity.y < 0f ? baseGravityScale * fallGravityMultiplier : baseGravityScale;
-            if (rb.linearVelocity.y < -maxFallSpeed)
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, -maxFallSpeed);
+            float maxFall = IsWallSliding ? wallSlideSpeed : maxFallSpeed;
+            if (rb.linearVelocity.y < -maxFall)
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, -maxFall);
         }
 
 #if UNITY_EDITOR

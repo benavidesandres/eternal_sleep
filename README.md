@@ -13,8 +13,11 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 | Moverse | A / D o ← / → | Stick izquierdo |
 | Saltar (y doble salto en el aire) | Espacio | A |
 | Paso de Sombra (impulso) | Shift izquierdo o K | RB |
-| Atacar | J, Z o clic izquierdo | X |
-| Atacar arriba / abajo | Mantener W / S al atacar | Stick arriba / abajo |
+| Atacar (pulsa 3 veces seguidas para el combo) | J, Z o clic izquierdo | X |
+| Atacar arriba / abajo / en diagonal (en el suelo y en el aire) | Mantener W / S (y A / D para diagonal) al atacar | Stick arriba / abajo / diagonal |
+| Golpe cargado (mejora) | Mantener atacar hasta brillar y soltar | Mantener X |
+| Golpe al suelo (mejora) | En el aire: mantener S y pulsar Shift o K | Stick abajo + RB |
+| Deslizar y saltar de pared (mejora) | En el aire, empujar contra la pared · Espacio para saltar | Stick + A |
 | Hablar con un aldeano | W, ↑ o E (junto a él) | Y |
 | Pasar diálogo / elegir | Espacio, Enter, J o Z · ←/→ para elegir | A |
 | Volver en menús | Escape | B |
@@ -29,6 +32,9 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
   Al llegar al portal, el aldeano despierta y vuelves al pueblo a su lado.
 - **Mejoras:** cada aldeano que despiertas te regala algo, en este orden: **Alas de Polilla** (doble salto),
   **Paso de Sombra** (impulso, también en el aire) y un **Corazón de Luna** (+1 corazón).
+  Otras tres se recogen en orbes por la calle: **Garras de Hiedra** (deslizar y saltar de pared),
+  **Peso del Sueño** (golpe al suelo, rompe el suelo agrietado del foso junto al pozo) y
+  **Aliento Contenido** (golpe cargado, el triple de daño). El tercer golpe del combo pega más fuerte.
 - **Zonas bloqueadas:** la torre corta la calle: sin doble salto no se llega al barrio del cementerio
   (quinto aldeano, Ash y más Lágrimas). El **mausoleo** está sellado por un velo de sombra que solo cruza
   el impulso, y dentro hay un abismo y una cornisa que piden las dos mejoras; al final espera otro Corazón de Luna.
@@ -106,6 +112,8 @@ Cada carácter es una casilla:
 | `L` `g` | Farola y lápida decorativa |
 | `B` | Velo de sombra (pared que solo cruza el impulso). Si cierra una sala, se le pone muro de fondo |
 | `H` | Corazón de Luna (+1 corazón máximo) |
+| `1` `2` `3` | Orbe de mejora: salto de pared, golpe al suelo y golpe cargado |
+| `%` | Suelo agrietado (sólido; solo lo rompe el golpe al suelo) |
 | `.` | Vacío |
 
 El jugador salta **3 casillas de alto** (llega justo a 3; a 4 ya no) y **5 de largo**. Con doble salto sube
