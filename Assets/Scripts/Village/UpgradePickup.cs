@@ -23,6 +23,16 @@ namespace EternalSleep.Village
 
         private string Id => string.IsNullOrEmpty(id) ? upgrade.ToString() : id;
 
+        /// <summary>Se dispara al recogerlo (la arena del jefe abre el portal).</summary>
+        public event System.Action Claimed;
+
+        /// <summary>Elige la mejora antes de activarlo (el orbe que suelta un jefe).</summary>
+        public void Setup(Upgrade newUpgrade)
+        {
+            upgrade = newUpgrade;
+            id = "";
+        }
+
         private void Awake() => start = transform.position;
 
         private void Start()
@@ -43,6 +53,7 @@ namespace EternalSleep.Village
             if (DialogueBox.Instance != null)
                 DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(upgrade), null, null);
             gameObject.SetActive(false);
+            Claimed?.Invoke();
         }
     }
 }

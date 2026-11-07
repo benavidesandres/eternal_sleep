@@ -9,11 +9,14 @@ namespace EternalSleep.Player
     /// Mejoras que Kael consigue durante la partida.
     /// Cada aldeano que despierta le regala la siguiente de la lista (WakeRewards);
     /// el Corazón de Luna escondido en el mausoleo da un corazón más
-    /// y las demás mejoras se recogen en objetos repartidos por el mapa (UpgradePickup).
+    /// y las otras tres las suelta cada jefe al morir (BossRewards), en un orbe que se recoge (UpgradePickup).
     /// </summary>
     public static class PlayerUpgrades
     {
         private static readonly Upgrade[] WakeRewards = { Upgrade.DoubleJump, Upgrade.Dash, Upgrade.ExtraHeart };
+
+        /// <summary>Lo que suelta cada jefe al morir, en orden: Bestia, Reina de las Polillas y Ojo.</summary>
+        private static readonly Upgrade[] BossRewards = { Upgrade.WallJump, Upgrade.GroundSlam, Upgrade.ChargedAttack };
 
         private static readonly HashSet<Upgrade> owned = new HashSet<Upgrade>();
         private static readonly HashSet<string> claimedPickups = new HashSet<string>();
@@ -43,6 +46,16 @@ namespace EternalSleep.Player
             Grant(reward);
             return true;
         }
+
+        /// <summary>Qué jefe toca ahora (0, 1 o 2). -1 si ya se vencieron todos.</summary>
+        public static int NextBossIndex()
+        {
+            for (int i = 0; i < BossRewards.Length; i++)
+                if (!Has(BossRewards[i])) return i;
+            return -1;
+        }
+
+        public static Upgrade BossReward(int index) => BossRewards[index];
 
         public static bool IsHeartClaimed(string id) => IsClaimed(id);
 

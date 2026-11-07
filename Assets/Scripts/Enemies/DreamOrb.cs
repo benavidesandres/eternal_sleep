@@ -28,6 +28,13 @@ namespace EternalSleep.Enemies
 
         public void Launch(Vector2 velocity) => rb.linearVelocity = velocity;
 
+        /// <summary>Lanza el orbe con gravedad (1 = cae como un objeto normal). Lo usan los jefes.</summary>
+        public void Launch(Vector2 velocity, float gravity)
+        {
+            rb.gravityScale = gravity;
+            rb.linearVelocity = velocity;
+        }
+
         private void OnTriggerEnter2D(Collider2D other)
         {
             var player = other.GetComponentInParent<PlayerHealth>();

@@ -21,6 +21,7 @@ namespace EternalSleep.Dream
     ///   Si mueres, el sueño se recarga con la misma semilla (mismo diseño).
     /// - CompleteDream(): al llegar al portal, el aldeano queda despierto, vuelves al pueblo
     ///   junto a él y te regala la siguiente mejora (PlayerUpgrades).
+    ///   Desde el tercer aldeano, el portal lleva antes a la arena del jefe (escena "Arena").
     ///
     /// Se crea solo la primera vez que se usa y sobrevive a los cambios de escena.
     /// </summary>
@@ -30,6 +31,10 @@ namespace EternalSleep.Dream
         [SerializeField] private string hubSceneName = "Hub";
         [Tooltip("Las escenas de Build Settings que empiezan así son pesadillas posibles.")]
         [SerializeField] private string dreamScenePrefix = "Level_";
+        [Tooltip("Arena del jefe que espera al final de algunos sueños.")]
+        [SerializeField] private string arenaSceneName = "Arena";
+        [Tooltip("A partir de qué aldeano (1 = el primero que despiertas) su sueño termina con un jefe.")]
+        [SerializeField] private int firstBossDream = 3;
 
         [Header("Variaciones")]
         [Tooltip("Probabilidad de que cada enemigo siga en el sueño.")]
@@ -141,10 +146,20 @@ namespace EternalSleep.Dream
             StartCoroutine(FadeAndLoad(scene));
         }
 
-        /// <summary>El jugador llegó al portal del sueño: el aldeano despierta y volvemos al pueblo.</summary>
+        /// <summary>
+        /// El jugador llegó al portal del sueño: el aldeano despierta y volvemos al pueblo.
+        /// Desde el aldeano número firstBossDream, antes hay que vencer a un jefe en la arena
+        /// (mientras queden jefes); el portal de la arena vuelve a llamar aquí.
+        /// </summary>
         public void CompleteDream()
         {
             if (transitioning) return;
+            if (NeedsBoss())
+            {
+                currentDreamScene = arenaSceneName; // sigue siendo el mismo sueño
+                StartCoroutine(FadeAndLoad(arenaSceneName));
+                return;
+            }
             if (currentDreamer != null && awakened.Add(currentDreamer) &&
                 PlayerUpgrades.GrantNextWakeReward(out var reward))
                 pendingReward = reward;
@@ -161,6 +176,14 @@ namespace EternalSleep.Dream
             currentDreamScene = null;
             StartCoroutine(FadeAndLoad(hubSceneName));
         }
+
+        private bool NeedsBoss() =>
+            currentDreamer != null &&
+            currentDreamScene != arenaSceneName &&
+            !awakened.Contains(currentDreamer) &&
+            awakened.Count + 1 >= firstBossDream &&
+            PlayerUpgrades.NextBossIndex() >= 0 &&
+            Application.CanStreamedLevelBeLoaded(arenaSceneName);
 
         private string PickRandomDream()
         {
@@ -190,7 +213,7 @@ namespace EternalSleep.Dream
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (scene.name == currentDreamScene) ApplyVariations(new System.Random(currentSeed));
+            if (scene.name == currentDreamScene && scene.name != arenaSceneName) ApplyVariations(new System.Random(currentSeed));
             else if (scene.name == hubSceneName && returnPosition.HasValue) PlacePlayer(returnPosition.Value);
         }
 

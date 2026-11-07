@@ -31,6 +31,7 @@ namespace EternalSleep.EditorTools
     ///   S  vigía que dispara  G  portal de salida   .  vacío
     ///   N  aldeano dormido (solo en Hub.txt): al hablarle entras en su sueño
     ///   B  velo de sombra (solo se cruza con el Paso de Sombra)   H  Corazón de Luna
+    ///   J  sitio del jefe (Arena.txt): se crean los tres jefes, su barra de vida y el orbe de recompensa
     ///
     /// Hub.txt (el pueblo) se construye primero y queda justo después del menú en Build Settings.
     /// </summary>
@@ -44,6 +45,8 @@ namespace EternalSleep.EditorTools
         private const string MenuScenePath = "Assets/Scenes/MainMenu.unity";
         private const string HubMapPath = LevelsFolder + "/Hub.txt";
         private const string HubBackgroundFallback = "Level_06"; // el pueblo de los sueños
+        private const string ArenaMapPath = LevelsFolder + "/Arena.txt";
+        private const string ArenaBackgroundFallback = "Level_04"; // la catedral
         private const float TilePPU = 16f; // 16 píxeles = 1 casilla
         private const string FontAssetPath = "Assets/UI/Fonts/PixelifySans SDF.asset";
 
@@ -75,6 +78,7 @@ namespace EternalSleep.EditorTools
                 ? Directory.GetFiles(LevelsFolder, "Level_*.txt").Select(p => p.Replace('\\', '/')).OrderBy(p => p).ToArray()
                 : new string[0];
             if (File.Exists(HubMapPath)) files = new[] { HubMapPath }.Concat(files).ToArray();
+            if (File.Exists(ArenaMapPath)) files = files.Concat(new[] { ArenaMapPath }).ToArray();
             if (files.Length == 0)
             {
                 EditorUtility.DisplayDialog("Eternal Sleep", "No hay mapas en " + LevelsFolder + " (Level_01.txt, ...).", "OK");
@@ -141,6 +145,8 @@ namespace EternalSleep.EditorTools
             int villagerCount = 0, talkers = 0, collectibles = 0, graves = 0;
             var secretCells = new List<Vector3Int>();
             var crackedCells = new List<Vector3Int>();
+            GameObject portal = null;
+            Vector2? bossSpot = null;
             Transform Village() => village != null ? village : (village = new GameObject("Pueblo").transform);
 
             for (int row = 0; row < height; row++)
@@ -173,7 +179,8 @@ namespace EternalSleep.EditorTools
                     case 'E': CreateWalker(enemies, art, new Vector2(x + 0.5f, y)); break;
                     case 'F': CreateFlyer(enemies, art, new Vector2(x + 0.5f, y + 0.5f)); break;
                     case 'S': CreateShooter(enemies, art, new Vector2(x + 0.5f, y)); break;
-                    case 'G': CreatePortal(art, new Vector2(x + 0.5f, y)); break;
+                    case 'G': portal = CreatePortal(art, new Vector2(x + 0.5f, y)); break;
+                    case 'J': bossSpot = feet; break;
                     case 'N':
                         if (villagers == null) villagers = new GameObject("Villagers").transform;
                         CreateDreamer(villagers, art, new Vector2(x + 0.5f, y), ++villagerCount, height);
@@ -226,11 +233,17 @@ namespace EternalSleep.EditorTools
 
             var bounds = new Rect(0, 0, width, height);
             CreateLevelManager(bounds);
-            CreateLight(villagerCount > 0 ? 0.8f : 1f); // el pueblo un poco más oscuro para que luzcan los faroles
-            var cam = CreateCamera(player.transform, start, bounds);
+            // El pueblo un poco más oscuro para que luzcan los faroles; la arena, en penumbra.
+            CreateLight(villagerCount > 0 ? 0.8f : bossSpot.HasValue ? 0.85f : 1f);
+            var cam = CreateCamera(player.transform, start, bounds, bossSpot.HasValue ? 7f : 5.5f); // en la arena se ve entera
             CreateBackground(art, cam, bounds, levelName);
             CreateHud(art, collectibles > 0);
-            if (villagerCount > 0 || talkers > 0) CreateDialogueBox(art);
+            if (villagerCount > 0 || talkers > 0 || bossSpot.HasValue) CreateDialogueBox(art);
+            if (bossSpot.HasValue)
+            {
+                CreateBossArena(enemies, art, bossSpot.Value, portal);
+                CreateBossBar(art);
+            }
             CreateDeathScreen(art);
 
             if (ground.GetUsedTilesCount() == 0)
@@ -494,7 +507,7 @@ namespace EternalSleep.EditorTools
             for (int i = 0; i < values.Length; i++) prop.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
         }
 
-        private static void CreatePortal(Art art, Vector2 feet)
+        private static GameObject CreatePortal(Art art, Vector2 feet)
         {
             var go = new GameObject("Portal");
             go.transform.position = feet;
@@ -508,6 +521,148 @@ namespace EternalSleep.EditorTools
             col.size = new Vector2(0.8f, 1.8f);
             col.offset = new Vector2(0f, 0.9f);
             go.AddComponent<LevelGoal>();
+            return go;
+        }
+
+        // ---------- Arena del jefe ----------
+
+        /// <summary>
+        /// Los tres jefes (desactivados: BossArena despierta el que toca), el orbe de recompensa oculto
+        /// y el gestor de la arena. El portal queda cerrado hasta recoger el orbe.
+        /// </summary>
+        private static void CreateBossArena(Transform enemies, Art art, Vector2 feet, GameObject portal)
+        {
+            var bosses = new Object[]
+            {
+                CreateBoss<BossBeast>(enemies, art, "Jefe_Bestia", "jefe_bestia", feet, 22, PixelArt.Hex("#E86A92"), new Vector2(0f, 1.4f),
+                    "INSOMNIO, LA BESTIA SIN PÁRPADOS", PixelArt.Hex("#E86A92"),
+                    ("idle", 3f, true), ("walk", 7f, true), ("windup", 12f, true), ("charge", 12f, true),
+                    ("leap", 1f, true), ("roar", 10f, true), ("hurt", 1f, true)),
+                CreateBoss<BossMoth>(enemies, art, "Jefe_Reina", "jefe_reina", feet + new Vector2(0f, 6f), 26, PixelArt.Hex("#FFE38A"), new Vector2(0f, 0.2f),
+                    "LA REINA DE LAS POLILLAS", PixelArt.Hex("#FFE9A8"),
+                    ("fly", 10f, true), ("windup", 16f, true), ("swoop", 1f, true), ("cast", 6f, true), ("hurt", 1f, true)),
+                CreateBoss<BossEye>(enemies, art, "Jefe_Ojo", "jefe_ojo", feet + new Vector2(0f, 5f), 30, PixelArt.Hex("#E86A92"), new Vector2(0f, 0.25f),
+                    "EL OJO QUE NO DUERME", Color.white,
+                    ("idle", 4f, true), ("aim", 10f, true), ("shoot", 1f, true), ("close", 1f, true), ("hurt", 1f, true)),
+            };
+
+            // Colliders a la medida de cada dibujo.
+            var beast = ((Component)bosses[0]).gameObject.AddComponent<BoxCollider2D>();
+            beast.isTrigger = true;
+            beast.size = new Vector2(3.4f, 2.4f);
+            beast.offset = new Vector2(0f, 1.3f);
+            var queen = ((Component)bosses[1]).gameObject.AddComponent<CircleCollider2D>();
+            queen.isTrigger = true;
+            queen.radius = 1.4f;
+            queen.offset = new Vector2(0f, 0.2f);
+            var eye = ((Component)bosses[2]).gameObject.AddComponent<CircleCollider2D>();
+            eye.isTrigger = true;
+            eye.radius = 1.2f;
+            eye.offset = new Vector2(0f, 0.25f);
+            foreach (Component b in bosses) b.gameObject.SetActive(false);
+
+            var reward = CreateUpgradePickup(null, art, feet + Vector2.up * 1.5f, Upgrade.WallJump);
+            reward.name = "RecompensaDelJefe";
+            reward.SetActive(false);
+
+            var arena = new GameObject("ArenaDelJefe").AddComponent<BossArena>();
+            SetRefs(arena, ("bosses", bosses), ("portal", portal), ("reward", reward.GetComponent<UpgradePickup>()));
+        }
+
+        private static T CreateBoss<T>(Transform parent, Art art, string name, string prefix, Vector2 position, int health,
+            Color hitColor, Vector2 center, string displayName, Color projectileTint,
+            params (string name, float fps, bool loop)[] clips) where T : BossBase
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            AddEnemyBase(go, art, prefix, 5, health, hitColor, center, clips);
+
+            var hp = new SerializedObject(go.GetComponent<EnemyHealth>());
+            hp.FindProperty("deathTime").floatValue = 1.4f;       // se deshace despacio
+            hp.FindProperty("hitStop").floatValue = 0.03f;
+            hp.FindProperty("invulnerableTime").floatValue = 0.12f; // deja encadenar el combo
+            hp.ApplyModifiedPropertiesWithoutUndo();
+
+            var boss = go.AddComponent<T>();
+            var so = new SerializedObject(boss);
+            so.FindProperty("displayName").stringValue = displayName;
+            so.FindProperty("projectilePrefab").objectReferenceValue = art.OrbPrefab;
+            so.FindProperty("projectileTint").colorValue = projectileTint;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return boss;
+        }
+
+        /// <summary>Barra de vida del jefe abajo en la pantalla (oculta hasta que empieza la pelea).</summary>
+        private static void CreateBossBar(Art art)
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontAssetPath);
+            var canvasGo = new GameObject("BarraDelJefe", typeof(RectTransform));
+            canvasGo.layer = LayerMask.NameToLayer("UI");
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 40;
+            var scaler = canvasGo.AddComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(640, 360);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            var root = NewUI("Contenido", canvasGo.transform);
+            root.anchorMin = root.anchorMax = root.pivot = new Vector2(0.5f, 0f);
+            root.anchoredPosition = new Vector2(0f, 14f);
+            root.sizeDelta = new Vector2(380f, 32f);
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            group.blocksRaycasts = false;
+            group.interactable = false;
+
+            var label = NewUI("Nombre", root);
+            label.anchorMin = new Vector2(0f, 1f);
+            label.anchorMax = new Vector2(1f, 1f);
+            label.pivot = new Vector2(0.5f, 1f);
+            label.anchoredPosition = Vector2.zero;
+            label.sizeDelta = new Vector2(0f, 16f);
+            var text = label.gameObject.AddComponent<TextMeshProUGUI>();
+            if (font != null) text.font = font;
+            text.fontSize = 12f;
+            text.color = PixelArt.Pale;
+            text.characterSpacing = 4f;
+            text.alignment = TextAlignmentOptions.Center;
+            text.raycastTarget = false;
+
+            var frame = NewUI("Marco", root);
+            frame.anchorMin = new Vector2(0f, 0f);
+            frame.anchorMax = new Vector2(1f, 0f);
+            frame.pivot = new Vector2(0.5f, 0f);
+            frame.anchoredPosition = Vector2.zero;
+            frame.sizeDelta = new Vector2(0f, 14f);
+            var frameImg = frame.gameObject.AddComponent<UnityEngine.UI.Image>();
+            frameImg.sprite = art.DialoguePanel;
+            frameImg.type = UnityEngine.UI.Image.Type.Sliced;
+            frameImg.raycastTarget = false;
+
+            var inner = NewUI("Interior", frame);
+            inner.anchorMin = Vector2.zero;
+            inner.anchorMax = Vector2.one;
+            inner.offsetMin = new Vector2(4f, 4f);
+            inner.offsetMax = new Vector2(-4f, -4f);
+
+            RectTransform Bar(string name, Color color)
+            {
+                var r = NewUI(name, inner);
+                r.anchorMin = Vector2.zero;
+                r.anchorMax = Vector2.one;
+                r.offsetMin = r.offsetMax = Vector2.zero;
+                var img = r.gameObject.AddComponent<UnityEngine.UI.Image>();
+                img.sprite = art.WhitePixel;
+                img.color = color;
+                img.raycastTarget = false;
+                return r;
+            }
+            var trail = Bar("Rastro", PixelArt.Hex("#6E1F3D"));
+            var fill = Bar("Vida", PixelArt.Rose);
+
+            var bar = canvasGo.AddComponent<BossHealthBar>();
+            SetRefs(bar, ("root", group), ("nameText", text), ("fill", fill), ("trail", trail));
         }
 
         /// <summary>Aldeano dormido: respira bajo su manta, le salen "Z", tiene bocadillo para hablar y su diálogo.</summary>
@@ -1153,7 +1308,7 @@ namespace EternalSleep.EditorTools
             }
         }
 
-        private static void CreateUpgradePickup(Transform parent, Art art, Vector2 center, Upgrade upgrade)
+        private static GameObject CreateUpgradePickup(Transform parent, Art art, Vector2 center, Upgrade upgrade)
         {
             var go = new GameObject("Mejora_" + upgrade);
             go.transform.SetParent(parent, false);
@@ -1171,6 +1326,7 @@ namespace EternalSleep.EditorTools
             pickup.FindProperty("upgrade").enumValueIndex = (int)upgrade;
             pickup.ApplyModifiedPropertiesWithoutUndo();
             AddLight(go.transform, Vector2.zero, new Color(0.7f, 0.6f, 1f), 0.9f, 2.4f, true);
+            return go;
         }
 
         private static void CreateSecrets(Tilemap ground, List<Vector3Int> cells)
@@ -1332,12 +1488,12 @@ namespace EternalSleep.EditorTools
             light.intensity = intensity;
         }
 
-        private static Camera CreateCamera(Transform player, Vector2 start, Rect bounds)
+        private static Camera CreateCamera(Transform player, Vector2 start, Rect bounds, float size)
         {
             var go = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = go.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 5.5f;
+            cam.orthographicSize = size;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = PixelArt.SkyTop;
             go.transform.position = new Vector3(start.x, start.y + 1.5f, -10f);
@@ -1367,6 +1523,7 @@ namespace EternalSleep.EditorTools
 
             var image = LoadLevelBackground(levelName);
             if (image == null && levelName == "Hub") image = LoadLevelBackground(HubBackgroundFallback);
+            if (image == null && levelName == "Arena") image = LoadLevelBackground(ArenaBackgroundFallback);
             if (image != null)
             {
                 // Fondo ilustrado del nivel: se mueve un poco más lento que la cámara.
@@ -1618,6 +1775,15 @@ namespace EternalSleep.EditorTools
                 SaveClip("polilla_" + clip, CreatureArt.MothClip(clip), new Vector2(0.5f, 0.5f), true, CreatureArt.EnemyPPU);
             foreach (var clip in new[] { "idle", "aim", "shoot", "hurt" })
                 SaveClip("vigia_" + clip, CreatureArt.WatcherClip(clip), feet, true, CreatureArt.EnemyPPU);
+
+            // Jefes.
+            var middle = new Vector2(0.5f, 0.5f);
+            foreach (var clip in new[] { "idle", "walk", "windup", "charge", "leap", "roar", "hurt" })
+                SaveClip("jefe_bestia_" + clip, BossArt.BeastClip(clip), feet, true, BossArt.PPU);
+            foreach (var clip in new[] { "fly", "windup", "swoop", "cast", "hurt" })
+                SaveClip("jefe_reina_" + clip, BossArt.QueenClip(clip), middle, true, BossArt.PPU);
+            foreach (var clip in new[] { "idle", "aim", "shoot", "close", "hurt" })
+                SaveClip("jefe_ojo_" + clip, BossArt.EyeClip(clip), middle, true, BossArt.PPU);
         }
 
         private static void SaveClip(string name, Texture2D[] frames, Vector2 pivot, bool flash, float ppu = CreatureArt.PPU)
