@@ -32,6 +32,8 @@ namespace EternalSleep.Enemies
 
         public int Current { get; private set; }
         public int Max => maxHealth;
+        /// <summary>Mientras es true los golpes no hacen daño (jefes al teletransportarse o cambiar de fase).</summary>
+        public bool Invulnerable { get; set; }
         public bool IsDead => Current <= 0;
         /// <summary>Le queda solo 1 de vida (y tenía más): momento de huir.</summary>
         public bool IsWeak => maxHealth > 1 && Current == 1;
@@ -52,6 +54,12 @@ namespace EternalSleep.Enemies
         public void TakeDamage(int amount, Vector2 from)
         {
             if (IsDead || Time.time < invulnerableUntil) return;
+            if (Invulnerable)
+            {
+                HitFeedback.Burst(Center, new Color(0.6f, 0.6f, 0.7f), 3, 3f); // el golpe rebota
+                invulnerableUntil = Time.time + invulnerableTime;
+                return;
+            }
 
             Current -= amount;
             invulnerableUntil = Time.time + invulnerableTime;

@@ -90,6 +90,9 @@ namespace EternalSleep.EditorTools
             c.AddParameter("AttackForward", AnimatorControllerParameterType.Trigger);
             c.AddParameter("AttackUp", AnimatorControllerParameterType.Trigger);
             c.AddParameter("AttackDown", AnimatorControllerParameterType.Trigger);
+            c.AddParameter("ComboStep", AnimatorControllerParameterType.Int);
+            c.AddParameter("IsWallSliding", AnimatorControllerParameterType.Bool);
+            c.AddParameter("IsSlamming", AnimatorControllerParameterType.Bool);
 
             var sm = c.layers[0].stateMachine;
             AnimatorState State(string stateName, string clip, float x, float y)
@@ -107,10 +110,19 @@ namespace EternalSleep.EditorTools
             var atkF   = State("AttackForward", "attack_forward", 300, 260);
             var atkU   = State("AttackUp", "attack_up", 300, 330);
             var atkD   = State("AttackDown", "attack_down", 300, 400);
+            // Movimientos nuevos: de momento reutilizan los clips que ya hay.
+            var atkF2  = State("AttackForward2", "attack_forward", 60, 260);
+            var atkF3  = State("AttackForward3", "attack_forward", 60, 330);
+            var wall   = State("WallSlide", "fall", 800, 100);
+            var slam   = State("GroundSlam", "attack_down", 800, 200);
+            atkF2.speed = 1.3f;
+            atkF3.speed = 1.15f;
+            slam.speed = 0f; // se queda en la primera pose mientras cae en picado
             sm.defaultState = idle;
 
             const AnimatorConditionMode Gt = AnimatorConditionMode.Greater, Lt = AnimatorConditionMode.Less;
             const AnimatorConditionMode Yes = AnimatorConditionMode.If, No = AnimatorConditionMode.IfNot;
+            const AnimatorConditionMode Eq = AnimatorConditionMode.Equals;
 
             // Suelo: Idle <-> Run (izquierda y derecha usan el mismo clip; el sprite se voltea por código)
             Add(idle, run, false, 0f, (Gt, "Speed", 0.1f));
@@ -132,11 +144,27 @@ namespace EternalSleep.EditorTools
             Add(land, run, false, 0f, (Gt, "Speed", 0.1f));
             Add(land, idle, true, 1f);
 
-            // Ataques desde cualquier estado; al terminar vuelven a Idle
-            AddAny(sm, atkF, "AttackForward");
-            AddAny(sm, atkU, "AttackUp");
-            AddAny(sm, atkD, "AttackDown");
+            // Pared: se agarra desde el aire; al soltarse sube (salto de pared), cae o aterriza
+            Add(jumpUp, wall, false, 0f, (Yes, "IsWallSliding", 0f));
+            Add(fall, wall, false, 0f, (Yes, "IsWallSliding", 0f));
+            Add(wall, land, false, 0f, (Yes, "IsGrounded", 0f));
+            Add(wall, jumpUp, false, 0f, (No, "IsWallSliding", 0f), (Gt, "VerticalVelocity", 0.1f));
+            Add(wall, fall, false, 0f, (No, "IsWallSliding", 0f));
+
+            // Golpe al suelo desde cualquier estado; termina al aterrizar
+            AddAny(sm, slam, (Yes, "IsSlamming", 0f));
+            Add(slam, land, false, 0f, (No, "IsSlamming", 0f));
+
+            // Ataques desde cualquier estado; al terminar vuelven a Idle.
+            // Hacia delante hay un estado por golpe del combo para poder encadenarlos sin esperar al clip.
+            AddAny(sm, atkF, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 0f));
+            AddAny(sm, atkF2, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 1f));
+            AddAny(sm, atkF3, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 2f));
+            AddAny(sm, atkU, (Yes, "AttackUp", 0f));
+            AddAny(sm, atkD, (Yes, "AttackDown", 0f));
             Add(atkF, idle, true, 1f);
+            Add(atkF2, idle, true, 1f);
+            Add(atkF3, idle, true, 1f);
             Add(atkU, idle, true, 1f);
             Add(atkD, idle, true, 1f);
 
@@ -155,13 +183,14 @@ namespace EternalSleep.EditorTools
             foreach (var cond in conditions) t.AddCondition(cond.mode, cond.threshold, cond.param);
         }
 
-        private static void AddAny(AnimatorStateMachine sm, AnimatorState to, string trigger)
+        private static void AddAny(AnimatorStateMachine sm, AnimatorState to,
+            params (AnimatorConditionMode mode, string param, float threshold)[] conditions)
         {
             var t = sm.AddAnyStateTransition(to);
             t.hasExitTime = false;
             t.duration = 0f;
             t.canTransitionToSelf = false;
-            t.AddCondition(AnimatorConditionMode.If, 0f, trigger);
+            foreach (var cond in conditions) t.AddCondition(cond.mode, cond.threshold, cond.param);
         }
 
         // ---------- Capas ----------

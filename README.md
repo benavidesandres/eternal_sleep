@@ -13,8 +13,11 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 | Moverse | A / D o ← / → | Stick izquierdo |
 | Saltar (y doble salto en el aire) | Espacio | A |
 | Paso de Sombra (impulso) | Shift izquierdo o K | RB |
-| Atacar | J, Z o clic izquierdo | X |
-| Atacar arriba / abajo | Mantener W / S al atacar | Stick arriba / abajo |
+| Atacar (pulsa 3 veces seguidas para el combo) | J, Z o clic izquierdo | X |
+| Atacar arriba / abajo / en diagonal (en el suelo y en el aire) | Mantener W / S (y A / D para diagonal) al atacar | Stick arriba / abajo / diagonal |
+| Golpe cargado (mejora) | Mantener atacar hasta brillar y soltar | Mantener X |
+| Golpe al suelo (mejora) | En el aire: mantener S y pulsar Shift o K | Stick abajo + RB |
+| Deslizar y saltar de pared (mejora) | En el aire, empujar contra la pared · Espacio para saltar | Stick + A |
 | Hablar con un aldeano | W, ↑ o E (junto a él) | Y |
 | Pasar diálogo / elegir | Espacio, Enter, J o Z · ←/→ para elegir | A |
 | Volver en menús | Escape | B |
@@ -29,6 +32,12 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
   Al llegar al portal, el aldeano despierta y vuelves al pueblo a su lado.
 - **Mejoras:** cada aldeano que despiertas te regala algo, en este orden: **Alas de Polilla** (doble salto),
   **Paso de Sombra** (impulso, también en el aire) y un **Corazón de Luna** (+1 corazón).
+  Las otras tres son la recompensa de los **jefes** (ver abajo): **Garras de Hiedra** (deslizar y saltar de pared),
+  **Peso del Sueño** (golpe al suelo, rompe el suelo agrietado del foso junto al pozo) y
+  **Aliento Contenido** (golpe cargado, el triple de daño). El tercer golpe del combo pega más fuerte.
+- **Jefes:** desde el tercer aldeano, el portal de su sueño no te despierta todavía: te lleva a la **arena**,
+  donde espera un jefe. Al vencerlo suelta un orbe con su mejora; al recogerlo se abre el portal de vuelta al pueblo.
+  Si mueres en la arena, puedes reintentar el combate.
 - **Zonas bloqueadas:** la torre corta la calle: sin doble salto no se llega al barrio del cementerio
   (quinto aldeano, Ash y más Lágrimas). El **mausoleo** está sellado por un velo de sombra que solo cruza
   el impulso, y dentro hay un abismo y una cornisa que piden las dos mejoras; al final espera otro Corazón de Luna.
@@ -51,6 +60,17 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 | **Sombra** (3 golpes) | Bestia de sombra con cráneo y cuernos. Patrulla; al verte se detiene ("!"), corre hacia ti, se agacha y embiste. Nunca cae por los bordes. |
 | **Polilla** (2 golpes) | Polilla gigante con alas de ojos. Vuela sobre ti, sacude las alas como aviso y se lanza en picada. |
 | **Vigía** (3 golpes) | Ojo en un pedestal gótico. Su iris se enciende antes de disparar orbes por delante de ti; cada tercer disparo es un abanico de 3. Puedes destruir los orbes. |
+
+### Jefes
+
+Salen en este orden, tienen barra de vida abajo en la pantalla y, a media vida, se enfurecen:
+rugen, se tiñen de rosa, van más rápido y estrenan un ataque.
+
+| Jefe | Ataques | Recompensa |
+|---|---|---|
+| **Insomnio, la Bestia sin Párpados** (22 golpes) | Mole de sombra con tres ojos y astas carmesí. **Embestida** de pared a pared (al chocar queda aturdida: es el momento de pegarle), **salto** que al caer lanza dos ondas por el suelo (sáltalas) y **rugido** que hace llover púas en arco. Furiosa: embiste dos veces, salta dos veces y encadena embestida + salto. | Garras de Hiedra |
+| **La Reina de las Polillas** (26 golpes) | Cuatro alas azul noche con lunas doradas. **Picada** hacia ti, **lluvia de polvo** a lo largo del techo (siempre deja un hueco) y **anillos de esporas**. Furiosa: tres picadas seguidas y una **danza** en círculo disparando abanicos. | Peso del Sueño |
+| **El Ojo que no Duerme** (30 golpes) | Ojo flotante con anillo de piedras y tentáculos. Se **teletransporta** (cerrado no recibe daño), dispara **ráfagas** que apuntan por delante de ti, **abanicos** y un **anillo con un hueco** hacia ti. Furioso: abanicos cruzados y una **espiral** de orbes. | Aliento Contenido |
 
 Al golpear a un enemigo se ilumina en blanco, se aplasta, suelta fragmentos y el juego se congela
 un instante; al morir se hincha y se deshace en humo. Cuando a Kael le pegan, destella en rojo,
@@ -106,6 +126,9 @@ Cada carácter es una casilla:
 | `L` `g` | Farola y lápida decorativa |
 | `B` | Velo de sombra (pared que solo cruza el impulso). Si cierra una sala, se le pone muro de fondo |
 | `H` | Corazón de Luna (+1 corazón máximo) |
+| `1` `2` `3` | Orbe de mejora: salto de pared, golpe al suelo y golpe cargado (ahora los dan los jefes; sirven para pruebas) |
+| `J` | Sitio del jefe (solo en `Arena.txt`). El portal `G` de la arena se abre al recoger la recompensa |
+| `%` | Suelo agrietado (sólido; solo lo rompe el golpe al suelo) |
 | `.` | Vacío |
 
 El jugador salta **3 casillas de alto** (llega justo a 3; a 4 ya no) y **5 de largo**. Con doble salto sube
@@ -113,6 +136,7 @@ El jugador salta **3 casillas de alto** (llega justo a 3; a 4 ya no) y **5 de la
 usa **Eternal Sleep → Construir niveles**. Para agregar un nivel, crea `Level_07.txt`
 (cualquier escena `Level_*` entra automáticamente en el sorteo de pesadillas).
 El pueblo es `Hub.txt`; si no tiene fondo propio usa el de `Level_06`.
+La arena de los jefes es `Arena.txt` (no entra en el sorteo de pesadillas); si no tiene fondo propio usa el de `Level_04`.
 Para que un objeto de un sueño aparezca solo a veces, añádele el componente **DreamVariant**.
 
 ### Fondos y arte
