@@ -26,6 +26,14 @@ namespace EternalSleep.UI
 
         private void OnDisable() => SetHighlighted(false);
 
+        /// <summary>Cambia el texto del botón (para botones creados en el juego).</summary>
+        public void SetText(string text)
+        {
+            if (label == null) return;
+            baseText = text;
+            label.text = text;
+        }
+
         public void OnSelect(BaseEventData eventData) => SetHighlighted(true);
 
         public void OnDeselect(BaseEventData eventData) => SetHighlighted(false);

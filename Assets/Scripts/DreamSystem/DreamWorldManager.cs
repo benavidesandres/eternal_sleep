@@ -128,6 +128,23 @@ namespace EternalSleep.Dream
             ClearDream();
         }
 
+        public static void WriteTo(SaveData data)
+        {
+            data.despiertos.AddRange(awakened);
+            foreach (var pair in wakeLines)
+            {
+                data.frasesId.Add(pair.Key);
+                data.frasesTexto.Add(pair.Value);
+            }
+        }
+
+        public static void ReadFrom(SaveData data)
+        {
+            foreach (var id in data.despiertos) awakened.Add(id);
+            for (int i = 0; i < data.frasesId.Count && i < data.frasesTexto.Count; i++)
+                wakeLines[data.frasesId[i]] = data.frasesTexto[i];
+        }
+
         private void Awake()
         {
             if (instance != null && instance != this) { Destroy(gameObject); return; }
@@ -309,7 +326,11 @@ namespace EternalSleep.Dream
                 DreamLevelBuilder.Instance.Build(currentMap, currentRecipe); // también al reintentar: el mismo sueño
             else if (scene.name == currentDreamScene && scene.name != arenaSceneName && scene.name != generatedSceneName)
                 ApplyVariations(new System.Random(currentSeed));
-            else if (scene.name == hubSceneName && returnPosition.HasValue) PlacePlayer(returnPosition.Value);
+            else if (scene.name == hubSceneName)
+            {
+                if (returnPosition.HasValue) PlacePlayer(returnPosition.Value);
+                SaveSystem.Save(); // de vuelta en el pueblo: punto de guardado
+            }
         }
 
         private static void PlacePlayer(Vector2 position)
