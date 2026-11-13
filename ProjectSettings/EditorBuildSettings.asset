@@ -29,6 +29,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Levels/Level_06.unity
     guid: 47cf1b6fbe78c0545ba581d4c9bbae01
+  - enabled: 1
+    path: Assets/Scenes/Levels/Arena.unity
+    guid: 2ebd39a717f1e964599b5e68b3c2b6d4
+  - enabled: 1
+    path: Assets/Scenes/Levels/Sueno.unity
+    guid: f2671106a6f54f741a22290ab2671835
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

@@ -108,6 +108,9 @@ namespace EternalSleep.Dream
 
         public static bool IsAwake(string dreamerId) => awakened.Contains(dreamerId);
 
+        /// <summary>¿Hay un fundido de entrada o salida de un sueño en marcha?</summary>
+        public static bool IsTransitioning => instance != null && instance.transitioning;
+
         /// <summary>Olvida el sueño actual (al volver al menú principal).</summary>
         public static void ClearDream()
         {
@@ -162,6 +165,9 @@ namespace EternalSleep.Dream
         {
             if (transitioning) return;
             bool generated = string.IsNullOrEmpty(fixedScene) && Application.CanStreamedLevelBeLoaded(generatedSceneName);
+            if (string.IsNullOrEmpty(fixedScene) && !generated)
+                Debug.LogWarning($"[Eternal Sleep] Falta la escena \"{generatedSceneName}\" en Build Settings: se usa una Level_XX. " +
+                                 "Usa Eternal Sleep > Construir niveles.");
             string scene = generated ? generatedSceneName : string.IsNullOrEmpty(fixedScene) ? PickRandomDream() : fixedScene;
             if (scene == null)
             {
@@ -224,24 +230,27 @@ namespace EternalSleep.Dream
             StartCoroutine(FadeAndLoad(hubSceneName));
         }
 
-        private bool NeedsBoss() =>
-            currentDreamer != null &&
-            currentDreamScene != arenaSceneName &&
-            !awakened.Contains(currentDreamer) &&
-            awakened.Count + 1 >= firstBossDream &&
-            PlayerUpgrades.NextBossIndex() >= 0 &&
-            Application.CanStreamedLevelBeLoaded(arenaSceneName);
+        private bool NeedsBoss()
+        {
+            bool due = currentDreamer != null &&
+                       currentDreamScene != arenaSceneName &&
+                       !awakened.Contains(currentDreamer) &&
+                       awakened.Count + 1 >= firstBossDream &&
+                       PlayerUpgrades.NextBossIndex() >= 0;
+            if (!due) return false;
+            if (Application.CanStreamedLevelBeLoaded(arenaSceneName)) return true;
+            Debug.LogWarning($"[Eternal Sleep] Toca jefe, pero falta la escena \"{arenaSceneName}\" en Build Settings. " +
+                             "Usa Eternal Sleep > Construir niveles.");
+            return false;
+        }
 
         private string PickRandomDream()
         {
             if (dreamPool.Count == 0) BuildPool();
             if (dreamPool.Count == 0) return null;
-            if (dreamPool.Count == 1) return dreamPool[0];
-
-            string pick;
-            do pick = dreamPool[Random.Range(0, dreamPool.Count)];
-            while (pick == lastDreamScene);
-            return pick;
+            var options = dreamPool.Where(s => s != lastDreamScene).ToList();
+            if (options.Count == 0) return dreamPool[0];
+            return options[Random.Range(0, options.Count)];
         }
 
         private IEnumerator FadeAndLoad(string scene)
