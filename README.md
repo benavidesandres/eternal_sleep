@@ -21,7 +21,7 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 | Hablar con un aldeano | W, ↑ o E (junto a él) | Y |
 | Pasar diálogo / elegir | Espacio, Enter, J o Z · ←/→ para elegir | A |
 | Volver en menús | Escape | B |
-| Pausa | Escape o P | Start |
+| Pausa (con opciones de volumen: A/D para cambiar) | Escape o P | Start |
 
 - Empiezas en el **pueblo (Hub)**, un mapa largo con casas, faroles, un pozo y un cementerio.
   Cinco aldeanos duermen atrapados en pesadillas. Cada uno vive en su casa: ponte en la puerta
