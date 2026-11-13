@@ -13,6 +13,7 @@ namespace EternalSleep
     {
         public int partida;
         public List<string> despiertos = new List<string>();
+        public bool finalVisto;
         public List<string> frasesId = new List<string>();
         public List<string> frasesTexto = new List<string>();
         public List<string> mejoras = new List<string>();

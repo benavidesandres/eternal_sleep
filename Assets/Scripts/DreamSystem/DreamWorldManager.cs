@@ -79,6 +79,9 @@ namespace EternalSleep.Dream
         public static string WakeLine(string dreamerId) => wakeLines.TryGetValue(dreamerId, out var l) ? l : null;
         private static readonly Dictionary<string, string> wakeLines = new Dictionary<string, string>();
 
+        /// <summary>¿Ya se vio el final (todos los aldeanos despiertos)? No se repite al continuar la partida.</summary>
+        private static bool endingSeen;
+
         /// <summary>Lo que se le cuenta a la IA del sueño de un aldeano (la misma semilla que usará el sueño).</summary>
         public static DreamAI.Request RequestFor(string dreamerId, string displayName, string[] sleepingLines) => new DreamAI.Request
         {
@@ -125,12 +128,14 @@ namespace EternalSleep.Dream
         {
             awakened.Clear();
             wakeLines.Clear();
+            endingSeen = false;
             ClearDream();
         }
 
         public static void WriteTo(SaveData data)
         {
             data.despiertos.AddRange(awakened);
+            data.finalVisto = endingSeen;
             foreach (var pair in wakeLines)
             {
                 data.frasesId.Add(pair.Key);
@@ -141,6 +146,7 @@ namespace EternalSleep.Dream
         public static void ReadFrom(SaveData data)
         {
             foreach (var id in data.despiertos) awakened.Add(id);
+            endingSeen = data.finalVisto;
             for (int i = 0; i < data.frasesId.Count && i < data.frasesTexto.Count; i++)
                 wakeLines[data.frasesId[i]] = data.frasesTexto[i];
         }
@@ -291,13 +297,27 @@ namespace EternalSleep.Dream
             pendingReward = null;
             void ShowReward(int _)
             {
-                if (!reward.HasValue) return;
+                if (!reward.HasValue) { CheckEnding(); return; }
                 Effects.AudioManager.Play("mejora", 0f);
-                DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(reward.Value), null, null);
+                DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(reward.Value), null, __ => CheckEnding());
             }
             if (pendingWakeLine != null) DialogueBox.Instance.Show(pendingWakeSpeaker, new[] { pendingWakeLine }, null, ShowReward);
             else ShowReward(0);
             pendingWakeLine = null;
+        }
+
+        /// <summary>
+        /// De vuelta en el pueblo: si ya no queda ningún aldeano dormido (y no se vio antes), empieza el final.
+        /// Se cuentan los aldeanos de la escena, así que añadir o quitar aldeanos no obliga a tocar esto.
+        /// </summary>
+        private void CheckEnding()
+        {
+            if (endingSeen || SceneManager.GetActiveScene().name != hubSceneName) return;
+            var dreamers = FindObjectsByType<DreamerNPC>(FindObjectsInactive.Include);
+            if (dreamers.Length == 0 || dreamers.Any(d => !d.IsAwake)) return;
+            endingSeen = true;
+            SaveSystem.Save();
+            EndingSequence.Play();
         }
 
         /// <summary>
