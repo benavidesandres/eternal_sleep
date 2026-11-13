@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using EternalSleep.Dream;
+using EternalSleep.Effects;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -139,7 +140,10 @@ namespace EternalSleep.UI
             {
                 float nav = navigate.ReadValue<float>();
                 if (Mathf.Abs(nav) > 0.5f && Mathf.Abs(lastNav) <= 0.5f)
+                {
                     selected = (selected + (nav > 0f ? -1 : 1) + labels.Count) % labels.Count;
+                    AudioManager.Play("menu_mover");
+                }
                 lastNav = nav;
 
                 for (int i = 0; i < labels.Count; i++)
@@ -149,7 +153,7 @@ namespace EternalSleep.UI
                     options[i].text = sel ? $"~ {labels[i]} ~" : labels[i];
                     options[i].color = sel ? Color.Lerp(selectedColor, Color.white, wave * 0.3f) : optionColor;
                 }
-                if (confirm.WasPressedThisFrame()) break;
+                if (confirm.WasPressedThisFrame()) { AudioManager.Play("menu_aceptar"); break; }
                 yield return null;
             }
 

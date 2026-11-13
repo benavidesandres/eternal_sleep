@@ -291,7 +291,9 @@ namespace EternalSleep.Dream
             pendingReward = null;
             void ShowReward(int _)
             {
-                if (reward.HasValue) DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(reward.Value), null, null);
+                if (!reward.HasValue) return;
+                Effects.AudioManager.Play("mejora", 0f);
+                DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(reward.Value), null, null);
             }
             if (pendingWakeLine != null) DialogueBox.Instance.Show(pendingWakeSpeaker, new[] { pendingWakeLine }, null, ShowReward);
             else ShowReward(0);

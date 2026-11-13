@@ -91,7 +91,10 @@ namespace EternalSleep.UI
 
             float nav = navigate.ReadValue<float>();
             if (Mathf.Abs(nav) > 0.5f && Mathf.Abs(lastNav) <= 0.5f)
+            {
                 selected = (selected + (nav > 0f ? -1 : 1) + labels.Count) % labels.Count;
+                AudioManager.Play("menu_mover");
+            }
             lastNav = nav;
 
             for (int i = 0; i < labels.Count; i++)
@@ -102,7 +105,7 @@ namespace EternalSleep.UI
                 optionTexts[i].color = sel ? Color.Lerp(SelectedColor, Color.white, wave * 0.3f) : OptionColor;
             }
 
-            if (confirm.WasPressedThisFrame()) Choose(labels[selected]);
+            if (confirm.WasPressedThisFrame()) { AudioManager.Play("menu_aceptar"); Choose(labels[selected]); }
         }
 
         /// <summary>
@@ -132,6 +135,7 @@ namespace EternalSleep.UI
             if (pausedInput != null && pausedInput.enabled) pausedInput.enabled = false;
             else pausedInput = null;
 
+            AudioManager.Play("menu_aceptar", 0f);
             IsPaused = true;
             Time.timeScale = 0f;
             root.SetActive(true);

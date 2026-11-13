@@ -68,6 +68,7 @@ namespace EternalSleep.Enemies
             HitFeedback.Burst(Center, hitColor, 7, 5f);
             HitFeedback.HitStop(hitStop);
             HitFeedback.Shake(0.08f, 0.12f);
+            AudioManager.Play(IsDead ? "muerte_enemigo" : "impacto_enemigo", 0.08f);
             Damaged?.Invoke(from);
 
             if (IsDead)

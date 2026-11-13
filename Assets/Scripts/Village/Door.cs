@@ -48,6 +48,7 @@ namespace EternalSleep.Village
 
             var input = player.GetComponent<PlayerInputReader>();
             if (input != null) input.enabled = false; // quieto durante el fundido
+            AudioManager.Play("puerta");
             ScreenFade.Transition(() =>
             {
                 player.Teleport(destination.position);

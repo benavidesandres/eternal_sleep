@@ -49,6 +49,7 @@ namespace EternalSleep.Village
         {
             if (other.GetComponentInParent<PlayerHealth>() == null) return;
             PlayerUpgrades.Claim(Id, upgrade);
+            AudioManager.Play("mejora", 0f);
             HitFeedback.Burst(transform.position, burstColor, 18, 4f, 0.1f, -2f);
             if (DialogueBox.Instance != null)
                 DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(upgrade), null, null);
