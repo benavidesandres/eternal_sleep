@@ -220,7 +220,7 @@ namespace EternalSleep.Dream
         /// <summary>Cambia los sitios ? y * por enemigos (o vacío) según la receta.</summary>
         private static void PlaceEnemies(string[] map, DreamRecipe r, Random rng)
         {
-            float fill = 0.35f + r.dificultad * 0.2f; // dificultad 1: 55 %, 3: 95 %
+            float fill = 0.55f + r.dificultad * 0.15f; // dificultad 1: 70 %, 3: 100 %
             float ground = r.enemigos.sombra + r.enemigos.vigia;
             for (int row = 0; row < map.Length; row++)
             {
@@ -229,12 +229,12 @@ namespace EternalSleep.Dream
                 {
                     if (chars[x] == '?')
                     {
-                        bool place = rng.NextDouble() < fill * Math.Min(1f, ground * 1.5f);
+                        bool place = rng.NextDouble() < fill * Math.Max(0.6f, Math.Min(1f, ground * 1.5f)); // nunca queda un sueño casi vacío
                         bool shooter = rng.NextDouble() * ground < r.enemigos.vigia;
                         chars[x] = place ? (shooter ? 'S' : 'E') : '.';
                     }
                     else if (chars[x] == '*')
-                        chars[x] = rng.NextDouble() < fill * Math.Min(1f, r.enemigos.polilla * 2f) ? 'F' : '.';
+                        chars[x] = rng.NextDouble() < fill * Math.Max(0.5f, Math.Min(1f, r.enemigos.polilla * 2f)) ? 'F' : '.';
                 }
                 map[row] = new string(chars);
             }
