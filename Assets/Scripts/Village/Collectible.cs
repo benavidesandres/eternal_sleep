@@ -42,6 +42,7 @@ namespace EternalSleep.Village
         {
             if (other.GetComponentInParent<PlayerHealth>() == null) return;
             CollectibleTracker.Collect(id);
+            AudioManager.Play("lagrima", 0.02f);
             HitFeedback.Burst(transform.position, burstColor, 14, 4f, 0.1f, -2f);
             HitFeedback.Burst(transform.position, Color.white, 6, 2.5f, 0.08f, -3f);
             gameObject.SetActive(false);

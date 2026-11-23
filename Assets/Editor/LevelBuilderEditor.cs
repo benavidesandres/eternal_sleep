@@ -126,6 +126,49 @@ namespace EternalSleep.EditorTools
                       string.Join(" → ", scenes.Select(Path.GetFileNameWithoutExtension)));
         }
 
+        /// <summary>
+        /// Construye solo la arena del jefe y la escena de los sueños generados, sin tocar el pueblo ni las Level_XX,
+        /// y las añade a Build Settings (las que ya estaban se quedan).
+        /// </summary>
+        [MenuItem("Eternal Sleep/Construir Arena y Sueño")]
+        public static void BuildArenaAndDream()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorUtility.DisplayDialog("Eternal Sleep", "Detén el juego (botón Play) antes de usar esta opción.", "OK");
+                return;
+            }
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+            int groundLayer = PlayerSetupEditor.EnsureLayer("Ground");
+            if (groundLayer < 0) return;
+            var controller = PlayerSetupEditor.BuildController();
+            if (controller == null) return;
+
+            string previous = EditorSceneManager.GetActiveScene().path;
+            var scenes = new List<string>();
+            try
+            {
+                EditorUtility.DisplayProgressBar("Eternal Sleep", "Dibujando el arte de los niveles...", 0f);
+                var artPaths = ArtPaths(CreateArt());
+                string controllerPath = AssetDatabase.GetAssetPath(controller);
+                if (File.Exists(ArenaMapPath)) scenes.Add(BuildLevel(ArenaMapPath, artPaths, controllerPath, groundLayer));
+                var sample = DreamGenerator.Fallback(DreamGenerator.Parse(File.ReadAllText(DreamChunksPath)));
+                scenes.Add(BuildLevel(sample, GeneratedDreamScene, artPaths, controllerPath, groundLayer));
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+
+            var list = EditorBuildSettings.scenes.Where(s => !scenes.Contains(s.path)).ToList();
+            list.AddRange(scenes.Select(p => new EditorBuildSettingsScene(p, true)));
+            EditorBuildSettings.scenes = list.ToArray();
+            if (!string.IsNullOrEmpty(previous)) EditorSceneManager.OpenScene(previous);
+            Debug.Log("[Eternal Sleep] Construidas y añadidas a Build Settings: " +
+                      string.Join(", ", scenes.Select(Path.GetFileNameWithoutExtension)));
+        }
+
         // ---------- Escena de un nivel ----------
 
         private static string BuildLevel(string mapPath, Dictionary<string, string[]> paths, string controllerPath, int groundLayer)

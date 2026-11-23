@@ -27,7 +27,7 @@ namespace EternalSleep.Village
             interact.AddBinding("<Keyboard>/upArrow");
             interact.AddBinding("<Keyboard>/e");
             interact.AddBinding("<Gamepad>/buttonNorth");
-            interact.performed += _ => Use();
+            interact.performed += _ => { if (!EternalSleep.UI.PauseMenu.IsPaused) Use(); };
             if (prompt != null) prompt.SetActive(false);
         }
 
@@ -48,6 +48,7 @@ namespace EternalSleep.Village
 
             var input = player.GetComponent<PlayerInputReader>();
             if (input != null) input.enabled = false; // quieto durante el fundido
+            AudioManager.Play("puerta");
             ScreenFade.Transition(() =>
             {
                 player.Teleport(destination.position);

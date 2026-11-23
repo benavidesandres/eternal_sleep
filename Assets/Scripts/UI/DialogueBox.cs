@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using EternalSleep.Effects;
 using EternalSleep.Player;
 using TMPro;
 using UnityEngine;
@@ -118,7 +119,10 @@ namespace EternalSleep.UI
                 {
                     float nav = navigate.ReadValue<float>();
                     if (Mathf.Abs(nav) > 0.5f && Mathf.Abs(lastNav) <= 0.5f)
+                    {
                         selected = (selected + (nav > 0f ? 1 : -1) + choices.Length) % choices.Length;
+                        AudioManager.Play("menu_mover");
+                    }
                     lastNav = nav;
 
                     for (int i = 0; i < choices.Length && i < choiceTexts.Length; i++)
@@ -127,7 +131,7 @@ namespace EternalSleep.UI
                         choiceTexts[i].color = i == selected ? selectedColor : choiceColor;
                     }
 
-                    if (confirm.WasPressedThisFrame()) { result = selected; break; }
+                    if (confirm.WasPressedThisFrame()) { result = selected; AudioManager.Play("menu_aceptar"); break; }
                     if (cancel.WasPressedThisFrame()) { result = choices.Length - 1; break; }
                     yield return null;
                 }
@@ -152,11 +156,13 @@ namespace EternalSleep.UI
             int total = bodyText.textInfo.characterCount;
 
             float shown = 0f;
+            int blips = 0;
             while (shown < total)
             {
                 if (confirm.WasPressedThisFrame()) { yield return null; break; } // completa la línea
                 shown += charsPerSecond * Time.unscaledDeltaTime;
                 bodyText.maxVisibleCharacters = Mathf.Min(total, (int)shown);
+                if ((int)shown / 3 > blips) { blips = (int)shown / 3; AudioManager.Play("dialogo_letra", 0.12f, 0.6f); }
                 yield return null;
             }
             bodyText.maxVisibleCharacters = total;

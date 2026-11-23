@@ -24,7 +24,21 @@ namespace EternalSleep.Village
 
         public static void Collect(string id)
         {
-            if (collected.Add(id)) Changed?.Invoke();
+            if (!collected.Add(id)) return;
+            Changed?.Invoke();
+            SaveSystem.SaveOutsideDream();
+        }
+
+        public static void WriteTo(SaveData data)
+        {
+            data.lagrimas.AddRange(collected);
+            data.secretos.AddRange(secrets);
+        }
+
+        public static void ReadFrom(SaveData data)
+        {
+            foreach (var id in data.lagrimas) collected.Add(id);
+            foreach (var id in data.secretos) secrets.Add(id);
         }
 
         public static void Reset()
@@ -36,6 +50,11 @@ namespace EternalSleep.Village
         }
 
         /// <summary>Devuelve true la primera vez que se descubre ese secreto.</summary>
-        public static bool DiscoverSecret(string id) => secrets.Add(id);
+        public static bool DiscoverSecret(string id)
+        {
+            if (!secrets.Add(id)) return false;
+            SaveSystem.SaveOutsideDream();
+            return true;
+        }
     }
 }

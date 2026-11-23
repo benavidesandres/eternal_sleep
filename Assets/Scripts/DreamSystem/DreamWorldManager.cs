@@ -79,6 +79,9 @@ namespace EternalSleep.Dream
         public static string WakeLine(string dreamerId) => wakeLines.TryGetValue(dreamerId, out var l) ? l : null;
         private static readonly Dictionary<string, string> wakeLines = new Dictionary<string, string>();
 
+        /// <summary>¿Ya se vio el final (todos los aldeanos despiertos)? No se repite al continuar la partida.</summary>
+        private static bool endingSeen;
+
         /// <summary>Lo que se le cuenta a la IA del sueño de un aldeano (la misma semilla que usará el sueño).</summary>
         public static DreamAI.Request RequestFor(string dreamerId, string displayName, string[] sleepingLines) => new DreamAI.Request
         {
@@ -108,6 +111,9 @@ namespace EternalSleep.Dream
 
         public static bool IsAwake(string dreamerId) => awakened.Contains(dreamerId);
 
+        /// <summary>¿Hay un fundido de entrada o salida de un sueño en marcha?</summary>
+        public static bool IsTransitioning => instance != null && instance.transitioning;
+
         /// <summary>Olvida el sueño actual (al volver al menú principal).</summary>
         public static void ClearDream()
         {
@@ -122,7 +128,27 @@ namespace EternalSleep.Dream
         {
             awakened.Clear();
             wakeLines.Clear();
+            endingSeen = false;
             ClearDream();
+        }
+
+        public static void WriteTo(SaveData data)
+        {
+            data.despiertos.AddRange(awakened);
+            data.finalVisto = endingSeen;
+            foreach (var pair in wakeLines)
+            {
+                data.frasesId.Add(pair.Key);
+                data.frasesTexto.Add(pair.Value);
+            }
+        }
+
+        public static void ReadFrom(SaveData data)
+        {
+            foreach (var id in data.despiertos) awakened.Add(id);
+            endingSeen = data.finalVisto;
+            for (int i = 0; i < data.frasesId.Count && i < data.frasesTexto.Count; i++)
+                wakeLines[data.frasesId[i]] = data.frasesTexto[i];
         }
 
         private void Awake()
@@ -162,6 +188,9 @@ namespace EternalSleep.Dream
         {
             if (transitioning) return;
             bool generated = string.IsNullOrEmpty(fixedScene) && Application.CanStreamedLevelBeLoaded(generatedSceneName);
+            if (string.IsNullOrEmpty(fixedScene) && !generated)
+                Debug.LogWarning($"[Eternal Sleep] Falta la escena \"{generatedSceneName}\" en Build Settings: se usa una Level_XX. " +
+                                 "Usa Eternal Sleep > Construir niveles.");
             string scene = generated ? generatedSceneName : string.IsNullOrEmpty(fixedScene) ? PickRandomDream() : fixedScene;
             if (scene == null)
             {
@@ -224,24 +253,27 @@ namespace EternalSleep.Dream
             StartCoroutine(FadeAndLoad(hubSceneName));
         }
 
-        private bool NeedsBoss() =>
-            currentDreamer != null &&
-            currentDreamScene != arenaSceneName &&
-            !awakened.Contains(currentDreamer) &&
-            awakened.Count + 1 >= firstBossDream &&
-            PlayerUpgrades.NextBossIndex() >= 0 &&
-            Application.CanStreamedLevelBeLoaded(arenaSceneName);
+        private bool NeedsBoss()
+        {
+            bool due = currentDreamer != null &&
+                       currentDreamScene != arenaSceneName &&
+                       !awakened.Contains(currentDreamer) &&
+                       awakened.Count + 1 >= firstBossDream &&
+                       PlayerUpgrades.NextBossIndex() >= 0;
+            if (!due) return false;
+            if (Application.CanStreamedLevelBeLoaded(arenaSceneName)) return true;
+            Debug.LogWarning($"[Eternal Sleep] Toca jefe, pero falta la escena \"{arenaSceneName}\" en Build Settings. " +
+                             "Usa Eternal Sleep > Construir niveles.");
+            return false;
+        }
 
         private string PickRandomDream()
         {
             if (dreamPool.Count == 0) BuildPool();
             if (dreamPool.Count == 0) return null;
-            if (dreamPool.Count == 1) return dreamPool[0];
-
-            string pick;
-            do pick = dreamPool[Random.Range(0, dreamPool.Count)];
-            while (pick == lastDreamScene);
-            return pick;
+            var options = dreamPool.Where(s => s != lastDreamScene).ToList();
+            if (options.Count == 0) return dreamPool[0];
+            return options[Random.Range(0, options.Count)];
         }
 
         private IEnumerator FadeAndLoad(string scene)
@@ -265,11 +297,27 @@ namespace EternalSleep.Dream
             pendingReward = null;
             void ShowReward(int _)
             {
-                if (reward.HasValue) DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(reward.Value), null, null);
+                if (!reward.HasValue) { CheckEnding(); return; }
+                Effects.AudioManager.Play("mejora", 0f);
+                DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(reward.Value), null, __ => CheckEnding());
             }
             if (pendingWakeLine != null) DialogueBox.Instance.Show(pendingWakeSpeaker, new[] { pendingWakeLine }, null, ShowReward);
             else ShowReward(0);
             pendingWakeLine = null;
+        }
+
+        /// <summary>
+        /// De vuelta en el pueblo: si ya no queda ningún aldeano dormido (y no se vio antes), empieza el final.
+        /// Se cuentan los aldeanos de la escena, así que añadir o quitar aldeanos no obliga a tocar esto.
+        /// </summary>
+        private void CheckEnding()
+        {
+            if (endingSeen || SceneManager.GetActiveScene().name != hubSceneName) return;
+            var dreamers = FindObjectsByType<DreamerNPC>(FindObjectsInactive.Include);
+            if (dreamers.Length == 0 || dreamers.Any(d => !d.IsAwake)) return;
+            endingSeen = true;
+            SaveSystem.Save();
+            EndingSequence.Play();
         }
 
         /// <summary>
@@ -300,7 +348,11 @@ namespace EternalSleep.Dream
                 DreamLevelBuilder.Instance.Build(currentMap, currentRecipe); // también al reintentar: el mismo sueño
             else if (scene.name == currentDreamScene && scene.name != arenaSceneName && scene.name != generatedSceneName)
                 ApplyVariations(new System.Random(currentSeed));
-            else if (scene.name == hubSceneName && returnPosition.HasValue) PlacePlayer(returnPosition.Value);
+            else if (scene.name == hubSceneName)
+            {
+                if (returnPosition.HasValue) PlacePlayer(returnPosition.Value);
+                SaveSystem.Save(); // de vuelta en el pueblo: punto de guardado
+            }
         }
 
         private static void PlacePlayer(Vector2 position)

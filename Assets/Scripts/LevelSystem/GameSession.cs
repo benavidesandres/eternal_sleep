@@ -18,15 +18,29 @@ namespace EternalSleep
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void OnPlayStart()
         {
-            NewGame();
+            ResetState();
+            DreamSeed.NextGame();
             ScreenFade.ResetState();
         }
 
-        /// <summary>Partida nueva: se llama al empezar Play y al pulsar Jugar en el menú.</summary>
+        /// <summary>Partida nueva desde el menú: borra la partida guardada.</summary>
         public static void NewGame()
         {
-            DreamWorldManager.ResetProgress();
+            ResetState();
             DreamSeed.NextGame(); // cada partida, sueños distintos
+            SaveSystem.Delete();
+        }
+
+        /// <summary>Continuar desde el menú: vuelve a cargar la partida guardada.</summary>
+        public static bool Continue()
+        {
+            ResetState();
+            return SaveSystem.Load();
+        }
+
+        private static void ResetState()
+        {
+            DreamWorldManager.ResetProgress();
             CollectibleTracker.Reset();
             TalkingNPC.ResetTalks();
             DialogueBox.ResetTimers();

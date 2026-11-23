@@ -21,6 +21,7 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 | Hablar con un aldeano | W, ↑ o E (junto a él) | Y |
 | Pasar diálogo / elegir | Espacio, Enter, J o Z · ←/→ para elegir | A |
 | Volver en menús | Escape | B |
+| Pausa (con opciones de volumen: A/D para cambiar) | Escape o P | Start |
 
 - Empiezas en el **pueblo (Hub)**, un mapa largo con casas, faroles, un pozo y un cementerio.
   Cinco aldeanos duermen atrapados en pesadillas. Cada uno vive en su casa: ponte en la puerta
@@ -49,9 +50,11 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
   insistes). No todo lo que parece pared lo es.
 - Al morir aparece la pantalla de muerte: la máscara de Kael se parte y puedes **intentarlo de nuevo**,
   **volver al pueblo** (si estabas en un sueño) o ir al **menú principal**.
+- **Final:** al despertar al último aldeano, Vesna se despide y salen los créditos con tus Lágrimas, secretos y mejoras. Después puedes continuar la partida para buscar lo que falte.
+- **Guardado:** la partida se guarda sola al volver al pueblo y al recoger algo en él. En el menú, **Continuar** la retoma (dentro de un sueño no se guarda).
 - Tienes **3 corazones**. Los pinchos y las caídas quitan uno y te devuelven al último suelo seguro.
 - Si golpeas hacia abajo sobre un enemigo, rebotas.
-- Con 0 corazones se reinicia el nivel. El portal te lleva al siguiente.
+- Con 0 corazones aparece la pantalla de muerte. En un sueño, el portal despierta al aldeano (o te lleva a la arena del jefe).
 
 ### Enemigos
 

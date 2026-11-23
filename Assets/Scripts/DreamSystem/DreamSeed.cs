@@ -27,14 +27,21 @@ namespace EternalSleep.Dream
         }
 
         /// <summary>Cuántas partidas se han empezado (cambia los sueños de una partida a otra).</summary>
-        public static int Game => PlayerPrefs.GetInt(GamesKey, 0);
+        public static int Game => continued ?? PlayerPrefs.GetInt(GamesKey, 0);
+
+        /// <summary>Número de la partida guardada que se está continuando (null = la última empezada).</summary>
+        private static int? continued;
 
         /// <summary>Se llama al empezar una partida nueva.</summary>
         public static void NextGame()
         {
+            continued = null;
             PlayerPrefs.SetInt(GamesKey, Game + 1);
             PlayerPrefs.Save();
         }
+
+        /// <summary>Al continuar una partida guardada: sus aldeanos siguen soñando lo mismo.</summary>
+        public static void ContinueGame(int game) => continued = game;
 
         /// <summary>Semilla de un sueño concreto. attempt sube si el nivel salió sin solución y hay que repetirlo.</summary>
         public static int ForDream(string dreamerId, int attempt = 0)

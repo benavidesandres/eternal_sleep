@@ -1,3 +1,4 @@
+using EternalSleep.Effects;
 using EternalSleep.Player;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace EternalSleep.Level
         {
             if (other.GetComponentInParent<PlayerHealth>() == null) return;
             var level = FindAnyObjectByType<LevelManager>();
+            AudioManager.Play("portal", 0f, 1f, 1f);
             if (level != null) level.CompleteLevel();
         }
     }

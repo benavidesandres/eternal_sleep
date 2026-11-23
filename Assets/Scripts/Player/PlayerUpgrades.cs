@@ -67,7 +67,9 @@ namespace EternalSleep.Player
         /// <summary>Recoge un objeto del mapa y da su mejora (solo la primera vez).</summary>
         public static void Claim(string id, Upgrade upgrade)
         {
-            if (claimedPickups.Add(id)) Grant(upgrade);
+            if (!claimedPickups.Add(id)) return;
+            Grant(upgrade);
+            SaveSystem.SaveOutsideDream();
         }
 
         /// <summary>Texto que se muestra al recibir la mejora.</summary>
@@ -117,6 +119,23 @@ namespace EternalSleep.Player
                         "CORAZÓN DE LUNA: tu vida máxima aumenta en un corazón.",
                     };
             }
+        }
+
+        public static void WriteTo(SaveData data)
+        {
+            foreach (var u in owned) data.mejoras.Add(u.ToString());
+            data.recogidosMejoras.AddRange(claimedPickups);
+            data.recompensasDespertar = wakeRewardsGiven;
+            data.corazonesExtra = BonusHearts;
+        }
+
+        public static void ReadFrom(SaveData data)
+        {
+            foreach (var name in data.mejoras)
+                if (Enum.TryParse(name, out Upgrade u)) owned.Add(u);
+            foreach (var id in data.recogidosMejoras) claimedPickups.Add(id);
+            wakeRewardsGiven = data.recompensasDespertar;
+            BonusHearts = data.corazonesExtra;
         }
 
         public static void Reset()

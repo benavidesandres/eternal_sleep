@@ -48,7 +48,7 @@ namespace EternalSleep.Dream
             interact.AddBinding("<Keyboard>/upArrow");
             interact.AddBinding("<Keyboard>/e");
             interact.AddBinding("<Gamepad>/buttonNorth");
-            interact.performed += _ => Interact();
+            interact.performed += _ => { if (!EternalSleep.UI.PauseMenu.IsPaused) Interact(); };
 
             zBase = new Vector3[sleepZ != null ? sleepZ.Length : 0];
             for (int i = 0; i < zBase.Length; i++) zBase[i] = sleepZ[i].localPosition;

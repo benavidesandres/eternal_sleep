@@ -94,6 +94,7 @@ namespace EternalSleep.Enemies
             FacePlayer();
             yield return new WaitForSeconds(introDelay);
 
+            AudioManager.Play("rugido_jefe", 0f);
             yield return Roar(roarTime);
             if (BossHealthBar.Instance != null) BossHealthBar.Instance.Show(displayName, health);
 
