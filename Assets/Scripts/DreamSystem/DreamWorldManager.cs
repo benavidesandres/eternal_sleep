@@ -193,11 +193,14 @@ namespace EternalSleep.Dream
         public void EnterDream(string dreamerId, string fixedScene, Vector2 returnAt, DreamAI.Request request = null)
         {
             if (transitioning) return;
-            bool generated = string.IsNullOrEmpty(fixedScene) && Application.CanStreamedLevelBeLoaded(generatedSceneName);
-            if (string.IsNullOrEmpty(fixedScene) && !generated)
+            bool wantsHandmade = fixedScene == HandmadeDream || (string.IsNullOrEmpty(fixedScene) && Random.value < handmadeChance);
+            if (fixedScene == HandmadeDream) fixedScene = "";
+            string scene = wantsHandmade ? PickRandomDream() : null; // null si no hay Level_XX: se cae al sueño generado
+            bool generated = scene == null && string.IsNullOrEmpty(fixedScene) && Application.CanStreamedLevelBeLoaded(generatedSceneName);
+            if (scene == null && string.IsNullOrEmpty(fixedScene) && !generated)
                 Debug.LogWarning($"[Eternal Sleep] Falta la escena \"{generatedSceneName}\" en Build Settings: se usa una Level_XX. " +
                                  "Usa Eternal Sleep > Construir niveles.");
-            string scene = generated ? generatedSceneName : string.IsNullOrEmpty(fixedScene) ? PickRandomDream() : fixedScene;
+            if (scene == null) scene = generated ? generatedSceneName : string.IsNullOrEmpty(fixedScene) ? PickRandomDream() : fixedScene;
             if (scene == null)
             {
                 Debug.LogError($"[Eternal Sleep] No hay escenas que empiecen por \"{dreamScenePrefix}\" en Build Settings.");
