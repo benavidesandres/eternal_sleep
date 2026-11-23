@@ -1075,6 +1075,21 @@ namespace EternalSleep.EditorTools
                     "Si alguna puerta se te resiste, avísame.",
                 },
             },
+            new VillagerInfo
+            {
+                Name = "Nora, la tejedora",
+                Sleeping = new[]
+                {
+                    "...el hilo no se acaba... y cada nudo es una puerta...",
+                    "Alguien tira del otro extremo... no sueltes...",
+                    "(Mueve los dedos como si tejiera.)",
+                },
+                Awake = new[]
+                {
+                    "Terminé la manta. Es para ti, aunque no la necesites.",
+                    "Hay un hilo que une todos los sueños del pueblo. Tú lo cuidas.",
+                },
+            },
         };
 
         /// <summary>Caja de diálogo (abajo de la pantalla) con nombre, texto, flecha y dos opciones.</summary>
