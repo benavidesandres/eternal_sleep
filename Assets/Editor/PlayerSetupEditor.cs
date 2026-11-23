@@ -12,7 +12,7 @@ namespace EternalSleep.EditorTools
 {
     /// <summary>
     /// Menú: Eternal Sleep > Configurar jugador.
-    /// Crea Player.controller con los clips de Assets/sprites/player/animations (idle, run, jump_up, fall, land y 3 ataques).
+    /// Crea Player.controller con los clips de Assets/sprites/player/animations (los genera Eternal Sleep > Importar reaper).
     /// Crea la capa "Ground" si no existe.
     /// Crea en la escena un Player con todos los scripts y un suelo de prueba.
     /// </summary>
@@ -70,20 +70,22 @@ namespace EternalSleep.EditorTools
 
         internal static AnimatorController BuildController()
         {
-            string[] names = { "idle", "run", "jump_up", "fall", "land", "attack_forward", "attack_up", "attack_down" };
+            string[] names = { "idle", "run", "jump_start", "jump_up", "fall", "land", "dash", "hurt",
+                               "attack_forward", "attack_up", "attack_down", "slam" };
             var clips = names.ToDictionary(n => n, FindClip);
             var missing = names.Where(n => clips[n] == null).ToArray();
             if (missing.Length > 0)
             {
                 EditorUtility.DisplayDialog("Eternal Sleep",
-                    $"Faltan clips en {AnimFolder}: {string.Join(", ", missing)}.\nCopia la carpeta Assets/sprites/player completa (con sus .meta).", "OK");
+                    $"Faltan clips en {AnimFolder}: {string.Join(", ", missing)}.\nUsa Eternal Sleep > Importar reaper.", "OK");
                 return null;
             }
 
-            if (AssetDatabase.LoadAssetAtPath<Object>(ControllerPath) != null)
-                AssetDatabase.DeleteAsset(ControllerPath);
+            // Se vacía en vez de borrarlo: las escenas lo referencian por GUID.
+            var c = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+            if (c == null) c = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
+            else ClearController(c);
 
-            var c = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
             c.AddParameter("Speed", AnimatorControllerParameterType.Float);
             c.AddParameter("VerticalVelocity", AnimatorControllerParameterType.Float);
             c.AddParameter("IsGrounded", AnimatorControllerParameterType.Bool);
@@ -93,6 +95,8 @@ namespace EternalSleep.EditorTools
             c.AddParameter("ComboStep", AnimatorControllerParameterType.Int);
             c.AddParameter("IsWallSliding", AnimatorControllerParameterType.Bool);
             c.AddParameter("IsSlamming", AnimatorControllerParameterType.Bool);
+            c.AddParameter("IsDashing", AnimatorControllerParameterType.Bool);
+            c.AddParameter("Hurt", AnimatorControllerParameterType.Trigger);
 
             var sm = c.layers[0].stateMachine;
             AnimatorState State(string stateName, string clip, float x, float y)
@@ -104,20 +108,22 @@ namespace EternalSleep.EditorTools
 
             var idle   = State("Idle", "idle", 300, 0);
             var run    = State("Run", "run", 300, 100);
+            var jumpStart = State("JumpStart", "jump_start", 560, -80);
             var jumpUp = State("JumpUp", "jump_up", 560, 0);
             var fall   = State("Fall", "fall", 560, 100);
             var land   = State("Land", "land", 560, 200);
             var atkF   = State("AttackForward", "attack_forward", 300, 260);
             var atkU   = State("AttackUp", "attack_up", 300, 330);
             var atkD   = State("AttackDown", "attack_down", 300, 400);
-            // Movimientos nuevos: de momento reutilizan los clips que ya hay.
+            // Sin sprites propios: el combo reusa el golpe al frente y la pared la caída.
             var atkF2  = State("AttackForward2", "attack_forward", 60, 260);
             var atkF3  = State("AttackForward3", "attack_forward", 60, 330);
             var wall   = State("WallSlide", "fall", 800, 100);
-            var slam   = State("GroundSlam", "attack_down", 800, 200);
+            var slam   = State("GroundSlam", "slam", 800, 200);
+            var dash   = State("Dash", "dash", 800, 300);
+            var hurt   = State("Hurt", "hurt", 800, 400);
             atkF2.speed = 1.3f;
             atkF3.speed = 1.15f;
-            slam.speed = 0f; // se queda en la primera pose mientras cae en picado
             sm.defaultState = idle;
 
             const AnimatorConditionMode Gt = AnimatorConditionMode.Greater, Lt = AnimatorConditionMode.Less;
@@ -128,14 +134,17 @@ namespace EternalSleep.EditorTools
             Add(idle, run, false, 0f, (Gt, "Speed", 0.1f));
             Add(run, idle, false, 0f, (Lt, "Speed", 0.1f));
 
-            // Dejar el suelo: subiendo -> JumpUp, cayendo (p. ej. al salir de una plataforma) -> Fall
+            // Dejar el suelo: subiendo -> JumpStart (impulso) -> JumpUp, cayendo (p. ej. al salir de una plataforma) -> Fall
             foreach (var ground in new[] { idle, run, land })
             {
-                Add(ground, jumpUp, false, 0f, (No, "IsGrounded", 0f), (Gt, "VerticalVelocity", 0.1f));
+                Add(ground, jumpStart, false, 0f, (No, "IsGrounded", 0f), (Gt, "VerticalVelocity", 0.1f));
                 Add(ground, fall, false, 0f, (No, "IsGrounded", 0f), (Lt, "VerticalVelocity", -0.1f));
             }
 
             // Aire
+            Add(jumpStart, jumpUp, true, 1f);
+            Add(jumpStart, fall, false, 0f, (Lt, "VerticalVelocity", 0f));
+            Add(jumpStart, land, false, 0f, (Yes, "IsGrounded", 0f));
             Add(jumpUp, fall, false, 0f, (Lt, "VerticalVelocity", 0f));
             Add(jumpUp, land, false, 0f, (Yes, "IsGrounded", 0f));
             Add(fall, land, false, 0f, (Yes, "IsGrounded", 0f));
@@ -145,6 +154,7 @@ namespace EternalSleep.EditorTools
             Add(land, idle, true, 1f);
 
             // Pared: se agarra desde el aire; al soltarse sube (salto de pared), cae o aterriza
+            Add(jumpStart, wall, false, 0f, (Yes, "IsWallSliding", 0f));
             Add(jumpUp, wall, false, 0f, (Yes, "IsWallSliding", 0f));
             Add(fall, wall, false, 0f, (Yes, "IsWallSliding", 0f));
             Add(wall, land, false, 0f, (Yes, "IsGrounded", 0f));
@@ -155,17 +165,33 @@ namespace EternalSleep.EditorTools
             AddAny(sm, slam, (Yes, "IsSlamming", 0f));
             Add(slam, land, false, 0f, (No, "IsSlamming", 0f));
 
+            // Recibir daño y dash interrumpen cualquier cosa; al terminar vuelven al suelo o al aire.
+            AddAny(sm, hurt, (Yes, "Hurt", 0f));
+            AddAny(sm, dash, (Yes, "IsDashing", 0f));
+            foreach (var st in new[] { hurt, dash })
+            {
+                Add(st, idle, true, 1f, (Yes, "IsGrounded", 0f));
+                Add(st, fall, true, 1f, (No, "IsGrounded", 0f));
+            }
+
             // Ataques desde cualquier estado; al terminar vuelven a Idle.
             // Hacia delante hay un estado por golpe del combo para poder encadenarlos sin esperar al clip.
-            AddAny(sm, atkF, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 0f));
-            AddAny(sm, atkF2, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 1f));
-            AddAny(sm, atkF3, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 2f));
-            AddAny(sm, atkU, (Yes, "AttackUp", 0f));
-            AddAny(sm, atkD, (Yes, "AttackDown", 0f));
-            Add(atkF, idle, true, 1f);
-            Add(atkF2, idle, true, 1f);
-            Add(atkF3, idle, true, 1f);
-            Add(atkU, idle, true, 1f);
+            // Pueden reiniciarse a sí mismos: el clip dura más que la espera entre ataques, y el
+            // trigger solo se activa cuando el ataque sale de verdad.
+            AddAny(sm, atkF, true, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 0f));
+            AddAny(sm, atkF2, true, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 1f));
+            AddAny(sm, atkF3, true, (Yes, "AttackForward", 0f), (Eq, "ComboStep", 2f));
+            AddAny(sm, atkU, true, (Yes, "AttackUp", 0f));
+            AddAny(sm, atkD, true, (Yes, "AttackDown", 0f));
+            // Si te mueves o estás en el aire, sale al desvanecerse el corte y se salta la recuperación.
+            float fadeEnd = ReaperSetupEditor.AttackFadeEnd;
+            foreach (var atk in new[] { atkF, atkF2, atkF3, atkU })
+            {
+                Add(atk, run, true, fadeEnd, (Gt, "Speed", 0.1f), (Yes, "IsGrounded", 0f));
+                Add(atk, fall, true, fadeEnd, (No, "IsGrounded", 0f));
+                Add(atk, idle, true, 1f);
+            }
+            Add(atkD, fall, true, 1f, (No, "IsGrounded", 0f));
             Add(atkD, idle, true, 1f);
 
             EditorUtility.SetDirty(c);
@@ -184,13 +210,28 @@ namespace EternalSleep.EditorTools
         }
 
         private static void AddAny(AnimatorStateMachine sm, AnimatorState to,
+            params (AnimatorConditionMode mode, string param, float threshold)[] conditions) =>
+            AddAny(sm, to, false, conditions);
+
+        private static void AddAny(AnimatorStateMachine sm, AnimatorState to, bool toSelf,
             params (AnimatorConditionMode mode, string param, float threshold)[] conditions)
         {
             var t = sm.AddAnyStateTransition(to);
             t.hasExitTime = false;
             t.duration = 0f;
-            t.canTransitionToSelf = false;
+            t.canTransitionToSelf = toSelf;
             foreach (var cond in conditions) t.AddCondition(cond.mode, cond.threshold, cond.param);
+        }
+
+        private static void ClearController(AnimatorController c)
+        {
+            while (c.parameters.Length > 0) c.RemoveParameter(0);
+            while (c.layers.Length > 1) c.RemoveLayer(1);
+            var sm = c.layers[0].stateMachine;
+            foreach (var t in sm.anyStateTransitions) sm.RemoveAnyStateTransition(t);
+            foreach (var t in sm.entryTransitions) sm.RemoveEntryTransition(t);
+            foreach (var s in sm.states) sm.RemoveState(s.state);
+            foreach (var sub in sm.stateMachines) sm.RemoveStateMachine(sub.stateMachine);
         }
 
         // ---------- Capas ----------
@@ -239,7 +280,8 @@ namespace EternalSleep.EditorTools
             go.transform.position = new Vector3(0f, -3.99f, 0f); // los pies están en el pivote del sprite
 
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/sprites/player/idle_00.png");
+            sr.sprite = AssetDatabase.LoadAllAssetsAtPath(ReaperSetupEditor.IdleSpritePath)
+                .OfType<Sprite>().FirstOrDefault(s => s.name == "reposo_0");
             sr.sortingOrder = 10;
 
             var animator = go.AddComponent<Animator>();

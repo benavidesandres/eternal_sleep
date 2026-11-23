@@ -29,6 +29,10 @@ namespace EternalSleep.Player
             health = GetComponent<PlayerHealth>();
             sprite = GetComponentInChildren<SpriteRenderer>();
             animator = GetComponentInChildren<Animator>();
+            // Con animación propia de daño no se congela: si no, el clip no se vería.
+            if (animator != null)
+                foreach (var p in animator.parameters)
+                    if (p.name == "Hurt") freezeAnimation = 0f;
         }
 
         private void OnEnable()
@@ -76,7 +80,7 @@ namespace EternalSleep.Player
 
         private IEnumerator Hurt()
         {
-            if (animator != null) animator.speed = 0f; // se queda "congelado" en la pose del golpe
+            if (animator != null && freezeAnimation > 0f) animator.speed = 0f; // se queda "congelado" en la pose del golpe
             float end = Time.time + tintTime;
             while (Time.time < end)
             {

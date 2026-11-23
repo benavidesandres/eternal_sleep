@@ -23,10 +23,14 @@ namespace EternalSleep.Player
         private static readonly int ComboStepHash     = Animator.StringToHash("ComboStep");
         private static readonly int WallSlidingHash   = Animator.StringToHash("IsWallSliding");
         private static readonly int SlammingHash      = Animator.StringToHash("IsSlamming");
+        private static readonly int DashingHash       = Animator.StringToHash("IsDashing");
+        private static readonly int HurtHash          = Animator.StringToHash("Hurt");
 
         private IMotorState motor;
         private PlayerAttack attack; // opcional
+        private PlayerHealth health; // opcional
         private bool hasMoveParams;  // false con un Animator antiguo, generado antes de los movimientos nuevos
+        private bool hasReaperParams; // false con un Animator anterior al reaper (sin dash ni daño)
 
         private void Reset()
         {
@@ -38,14 +42,19 @@ namespace EternalSleep.Player
         {
             motor = GetComponent<PlayerMotor>();
             attack = GetComponent<PlayerAttack>();
+            health = GetComponent<PlayerHealth>();
             if (animator == null) animator = GetComponent<Animator>();
             if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
             foreach (var p in animator.parameters)
+            {
                 if (p.nameHash == WallSlidingHash) hasMoveParams = true;
+                if (p.nameHash == HurtHash) hasReaperParams = true;
+            }
         }
 
         private void OnEnable()
         {
+            if (health != null) health.Damaged += OnDamaged;
             if (attack == null) return;
             attack.Attacked += OnAttacked;
             attack.ChargedAttacked += OnChargedAttacked;
@@ -53,9 +62,15 @@ namespace EternalSleep.Player
 
         private void OnDisable()
         {
+            if (health != null) health.Damaged -= OnDamaged;
             if (attack == null) return;
             attack.Attacked -= OnAttacked;
             attack.ChargedAttacked -= OnChargedAttacked;
+        }
+
+        private void OnDamaged(Vector2 from)
+        {
+            if (hasReaperParams) animator.SetTrigger(HurtHash);
         }
 
         private void Update()
@@ -68,6 +83,7 @@ namespace EternalSleep.Player
                 animator.SetBool(WallSlidingHash, motor.IsWallSliding);
                 animator.SetBool(SlammingHash, motor.IsSlamming);
             }
+            if (hasReaperParams) animator.SetBool(DashingHash, motor.IsDashing);
 
             bool lookLeft = motor.FacingDirection < 0;
             spriteRenderer.flipX = spriteFacesRight ? lookLeft : !lookLeft;
