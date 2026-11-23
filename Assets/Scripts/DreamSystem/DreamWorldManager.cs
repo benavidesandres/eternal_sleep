@@ -38,6 +38,9 @@ namespace EternalSleep.Dream
         [Tooltip("Escena vacía donde se construyen los sueños generados (únicos para cada jugador). Si no existe, se usan las Level_XX.")]
         [SerializeField] private string generatedSceneName = "Sueno";
 
+        [Tooltip("Probabilidad de que un aldeano normal sueñe con una Level_XX hecha a mano en vez de un sueño generado.")]
+        [SerializeField, Range(0f, 1f)] private float handmadeChance = 0.3f;
+
         [Header("Variaciones")]
         [Tooltip("Probabilidad de que cada enemigo siga en el sueño.")]
         [SerializeField, Range(0f, 1f)] private float enemyKeepChance = 0.92f;
@@ -48,6 +51,9 @@ namespace EternalSleep.Dream
 
         [Header("Transición")]
         [SerializeField] private float fadeTime = 0.6f;
+
+        /// <summary>Valor de dreamScene para un aldeano cuyo sueño siempre es una de las Level_XX.</summary>
+        public const string HandmadeDream = "@nivel";
 
         private static DreamWorldManager instance;
         private static readonly HashSet<string> awakened = new HashSet<string>();
