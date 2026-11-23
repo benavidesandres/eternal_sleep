@@ -40,7 +40,7 @@ namespace EternalSleep.Dream
 
         [Header("Variaciones")]
         [Tooltip("Probabilidad de que cada enemigo siga en el sueño.")]
-        [SerializeField, Range(0f, 1f)] private float enemyKeepChance = 0.8f;
+        [SerializeField, Range(0f, 1f)] private float enemyKeepChance = 0.92f;
         [SerializeField] private int minEnemies = 2;
         [Tooltip("Cuántas plataformas extra (de las que se atraviesan desde abajo) intenta añadir.")]
         [SerializeField] private int extraPlatforms = 4;
