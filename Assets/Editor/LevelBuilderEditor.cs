@@ -1045,6 +1045,21 @@ namespace EternalSleep.EditorTools
                     "Hay más durmientes ahí abajo, muchacho. El sueño eterno no descansa.",
                 },
             },
+            new VillagerInfo
+            {
+                Name = "Ana, la pastelera",
+                Sleeping = new[]
+                {
+                    "...la masa no sube... se queda mirándome...",
+                    "Alguien se comió todos los dulces... y ahora vienen por mí...",
+                    "(Revuelve el aire con la mano, dormida.)",
+                },
+                Awake = new[]
+                {
+                    "Los dulces siguen en su sitio. Esta mañana los conté dos veces.",
+                    "Pasa cuando quieras, Kael. Siempre hay algo caliente.",
+                },
+            },
         };
 
         /// <summary>Caja de diálogo (abajo de la pantalla) con nombre, texto, flecha y dos opciones.</summary>
