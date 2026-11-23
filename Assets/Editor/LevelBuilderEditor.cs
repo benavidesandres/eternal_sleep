@@ -344,6 +344,7 @@ namespace EternalSleep.EditorTools
         /// <summary>
         /// Muro de fondo en las salas cerradas por un velo de sombra (el mausoleo): rellena el hueco
         /// que hay detrás de cada velo si está rodeado de suelo. El lado que da al aire libre se descarta.
+            if (bottom.Length == 0) return;
         /// </summary>
         private static void PaintBackWalls(Transform grid, TileBase tile, string[] lines)
         {
