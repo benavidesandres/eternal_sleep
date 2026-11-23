@@ -29,8 +29,10 @@ namespace EternalSleep.Player
 
         [Header("Golpe")]
         [SerializeField] private int damage = 1;
-        [SerializeField] private Vector2 forwardSize = new Vector2(1.6f, 1.3f);
-        [SerializeField] private Vector2 verticalSize = new Vector2(1.4f, 1.5f);
+        [Tooltip("Cuánto sigue dañando el golpe después de pulsar (lo que dura el corte en pantalla).")]
+        [SerializeField] private float activeTime = 0.3f;
+        [SerializeField] private Vector2 forwardSize = new Vector2(2.2f, 1.6f);
+        [SerializeField] private Vector2 verticalSize = new Vector2(2f, 1.5f);
         [SerializeField] private Vector2 diagonalSize = new Vector2(1.5f, 1.5f);
         [SerializeField] private float downBounceForce = 12f;
 
@@ -63,6 +65,14 @@ namespace EternalSleep.Player
         private readonly Collider2D[] hits = new Collider2D[16];
         private readonly HashSet<IDamageable> damaged = new HashSet<IDamageable>();
 
+        // Golpe en curso: sigue dañando mientras se ve el corte, una vez a cada objetivo.
+        private readonly HashSet<IDamageable> swingDamaged = new HashSet<IDamageable>();
+        private AttackDirection swingDir;
+        private int swingAmount;
+        private float swingSizeMultiplier = 1f;
+        private float swingEndsAt = float.NegativeInfinity;
+        private bool swingBounced;
+
         public bool IsCharging { get; private set; }
         public bool IsChargeReady { get; private set; }
         /// <summary>0 al pulsar, 1 cuando el golpe cargado está listo.</summary>
@@ -93,6 +103,11 @@ namespace EternalSleep.Player
             input.AttackReleased -= OnAttackReleased;
             if (motor != null) motor.Slammed -= OnSlammed;
             CancelCharge();
+        }
+
+        private void FixedUpdate()
+        {
+            if (Time.time <= swingEndsAt) SwingTick();
         }
 
         private void Update()
@@ -173,23 +188,39 @@ namespace EternalSleep.Player
 
         private void Hit(AttackDirection dir, int amount, float sizeMultiplier)
         {
-            GetArea(dir, out Vector2 center, out Vector2 size);
-            size *= sizeMultiplier;
-            if (dir == AttackDirection.Forward)
-                center.x += (motor != null ? motor.FacingDirection : 1) * (size.x - size.x / sizeMultiplier) * 0.5f;
+            swingDir = dir;
+            swingAmount = amount;
+            swingSizeMultiplier = sizeMultiplier;
+            swingEndsAt = Time.time + activeTime;
+            swingBounced = false;
+            swingDamaged.Clear();
+            SwingTick();
+        }
 
-            int count = DamageArea(center, size, amount);
+        /// <summary>El área sigue al jugador mientras dura el golpe.</summary>
+        private void SwingTick()
+        {
+            GetArea(swingDir, out Vector2 center, out Vector2 size);
+            size *= swingSizeMultiplier;
+            if (swingDir == AttackDirection.Forward)
+                center.x += (motor != null ? motor.FacingDirection : 1) * (size.x - size.x / swingSizeMultiplier) * 0.5f;
 
-            bool downward = dir == AttackDirection.Down || dir == AttackDirection.DownForward;
-            if (downward && count > 0 && motor != null && !motor.IsGrounded)
+            int count = DamageArea(center, size, swingAmount, swingDamaged);
+
+            bool downward = swingDir == AttackDirection.Down || swingDir == AttackDirection.DownForward;
+            if (downward && count > 0 && !swingBounced && motor != null && !motor.IsGrounded)
+            {
+                swingBounced = true;
                 motor.Bounce(downBounceForce);
+            }
         }
 
         private void OnSlammed(Vector2 feet)
         {
             // El área se hunde un poco en el suelo para alcanzar los suelos agrietados que hay debajo.
             Vector2 center = feet + Vector2.up * (slamSize.y * 0.5f - 0.25f);
-            DamageArea(center, slamSize, slamDamage);
+            damaged.Clear();
+            DamageArea(center, slamSize, slamDamage, damaged);
 
             int count = Physics2D.OverlapBox(center, slamSize, 0f, ContactFilter2D.noFilter, hits);
             for (int i = 0; i < count; i++)
@@ -199,21 +230,22 @@ namespace EternalSleep.Player
             }
         }
 
-        /// <summary>Daña una vez a cada IDamageable dentro del área. Devuelve a cuántos golpeó.</summary>
-        private int DamageArea(Vector2 center, Vector2 size, int amount)
+        /// <summary>Daña a cada IDamageable del área que aún no esté en 'already'. Devuelve a cuántos golpeó ahora.</summary>
+        private int DamageArea(Vector2 center, Vector2 size, int amount, HashSet<IDamageable> already)
         {
             var filter = ContactFilter2D.noFilter; // incluye triggers (enemigos, orbes)
             int count = Physics2D.OverlapBox(center, size, 0f, filter, hits);
 
-            damaged.Clear();
+            int hitNow = 0;
             for (int i = 0; i < count; i++)
             {
                 if (hits[i] == null || hits[i] == body) continue;
                 var target = hits[i].GetComponentInParent<IDamageable>();
-                if (target == null || !damaged.Add(target)) continue;
+                if (target == null || !already.Add(target)) continue;
                 target.TakeDamage(amount, transform.position);
+                hitNow++;
             }
-            return damaged.Count;
+            return hitNow;
         }
 
         private void GetArea(AttackDirection dir, out Vector2 center, out Vector2 size)
@@ -240,8 +272,9 @@ namespace EternalSleep.Player
                     center = new Vector2(b.center.x + facing * (b.extents.x + size.x * 0.3f), b.min.y + size.y * 0.1f);
                     break;
                 default:
+                    // Empieza en el centro del cuerpo: así también pega a lo que está encima del jugador.
                     size = forwardSize;
-                    center = new Vector2(b.center.x + facing * (b.extents.x + size.x * 0.5f), b.center.y);
+                    center = new Vector2(b.center.x + facing * size.x * 0.5f, b.center.y);
                     break;
             }
         }
