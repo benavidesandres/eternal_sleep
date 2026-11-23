@@ -40,6 +40,7 @@ namespace EternalSleep.Enemies
         private int facing = -1;
         private Vector2 lastPlayerPos;
         private Vector2 playerVelocity;
+        private bool hasLastPos;
 
         private void Awake()
         {
@@ -68,7 +69,8 @@ namespace EternalSleep.Enemies
         {
             // Estima la velocidad del jugador para apuntar por delante.
             Vector2 p = senses.PlayerPosition;
-            playerVelocity = Vector2.Lerp(playerVelocity, (p - lastPlayerPos) / Time.fixedDeltaTime, 0.2f);
+            if (hasLastPos) playerVelocity = Vector2.Lerp(playerVelocity, (p - lastPlayerPos) / Time.fixedDeltaTime, 0.2f);
+            hasLastPos = true;
             lastPlayerPos = p;
 
             bool sees = senses.CanSeePlayer();
