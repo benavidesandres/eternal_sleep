@@ -118,6 +118,7 @@ namespace EternalSleep.Dream
             {
                 int y = height - 1 - row;
                 string line = map[row];
+                if (line.Length == 0) continue;
                 for (int i = 1; i <= margin; i++)
                 {
                     if (line[0] == '#') ground.SetTile(new Vector3Int(-i, y, 0), groundTile);
@@ -125,6 +126,7 @@ namespace EternalSleep.Dream
                 }
             }
             string bottom = map[height - 1];
+            if (bottom.Length == 0) return;
             for (int x = -margin; x < bottom.Length + margin; x++)
             {
                 if (bottom[Mathf.Clamp(x, 0, bottom.Length - 1)] != '#') continue;

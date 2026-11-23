@@ -1,0 +1,999 @@
+fileFormatVersion: 2
+guid: ddb87f0ea4c9cae43bd4a62be86cc59e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6253080993554965479
+    second: ataque_abajo_0
+  - first:
+      213: 578437119749109853
+    second: ataque_abajo_1
+  - first:
+      213: -205369565699971492
+    second: ataque_abajo_2
+  - first:
+      213: -4617298540945284941
+    second: ataque_abajo_3
+  - first:
+      213: -6450993360638713657
+    second: ataque_abajo_4
+  - first:
+      213: -2059202819137930792
+    second: ataque_abajo_5
+  - first:
+      213: -7003506219905010379
+    second: ataque_abajo_6
+  - first:
+      213: 7064188011181629728
+    second: ataque_abajo_7
+  - first:
+      213: -3449927532768990002
+    second: ataque_abajo_8
+  - first:
+      213: 110431466617081342
+    second: ataque_abajo_9
+  - first:
+      213: 2553457338335020663
+    second: ataque_abajo_10
+  - first:
+      213: 2753405249061788903
+    second: ataque_abajo_11
+  - first:
+      213: 946950741217160136
+    second: ataque_abajo_12
+  - first:
+      213: -9032779003147566407
+    second: ataque_abajo_13
+  - first:
+      213: -386631472902417720
+    second: ataque_abajo_14
+  - first:
+      213: -2348997372903374504
+    second: ataque_abajo_15
+  - first:
+      213: -4127049153069956221
+    second: ataque_abajo_16
+  - first:
+      213: -4718560128815370941
+    second: ataque_abajo_17
+  - first:
+      213: 9029389312158956671
+    second: ataque_abajo_18
+  - first:
+      213: -6564873027610006845
+    second: ataque_abajo_19
+  - first:
+      213: -120187529158245494
+    second: ataque_abajo_20
+  - first:
+      213: -1783318004143711868
+    second: ataque_abajo_21
+  - first:
+      213: -299240883983725922
+    second: ataque_abajo_22
+  - first:
+      213: -1240546214541995822
+    second: ataque_abajo_23
+  - first:
+      213: 9198364611511077599
+    second: ataque_abajo_24
+  - first:
+      213: 6734632603113966632
+    second: ataque_abajo_25
+  - first:
+      213: -5752532084236327454
+    second: ataque_abajo_26
+  - first:
+      213: -4368648206311869704
+    second: ataque_abajo_27
+  - first:
+      213: -962209237999364324
+    second: ataque_abajo_28
+  - first:
+      213: 436370441750326481
+    second: ataque_abajo_29
+  - first:
+      213: -1710672610265060917
+    second: ataque_abajo_30
+  - first:
+      213: -3300943047597917310
+    second: ataque_abajo_31
+  - first:
+      213: -1111190897909595592
+    second: ataque_abajo_32
+  - first:
+      213: -8317530548417907872
+    second: ataque_abajo_33
+  - first:
+      213: -1655530470853624817
+    second: ataque_abajo_34
+  - first:
+      213: 7736375775814414451
+    second: ataque_abajo_35
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 52
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ataque_abajo_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 560
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e3279c880867c650800000000000000
+      internalID: 6253080993554965479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_1
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 560
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d58bb87ee75070800800000000000000
+      internalID: 578437119749109853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_2
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 560
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c56e6c4d771662df0800000000000000
+      internalID: -205369565699971492
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_3
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 560
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b0e605c07f0cefb0800000000000000
+      internalID: -4617298540945284941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_4
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 560
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c0e9b2a7b77976a0800000000000000
+      internalID: -6450993360638713657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_5
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 560
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d9fcc432fd3c63e0800000000000000
+      internalID: -2059202819137930792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_6
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 560
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 535b25cf23c8ece90800000000000000
+      internalID: -7003506219905010379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_7
+      rect:
+        serializedVersion: 2
+        x: 1407
+        y: 560
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 021ed098199090260800000000000000
+      internalID: 7064188011181629728
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 420
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ecce67cff256f10d0800000000000000
+      internalID: -3449927532768990002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_9
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 420
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: efd8cb375d4588100800000000000000
+      internalID: 110431466617081342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_10
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 420
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 776c290abe3bf6320800000000000000
+      internalID: 2553457338335020663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_11
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 420
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ec16016c7f063620800000000000000
+      internalID: 2753405249061788903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_12
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 420
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8cbaa069eae342d00800000000000000
+      internalID: 946950741217160136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_13
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 420
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b248c6ba5f15a280800000000000000
+      internalID: -9032779003147566407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_14
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 420
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c25aae49b862aaf0800000000000000
+      internalID: -386631472902417720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_15
+      rect:
+        serializedVersion: 2
+        x: 1407
+        y: 420
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 851c4c9b55fa66fd0800000000000000
+      internalID: -2348997372903374504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_16
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 280
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38340bc49a6c9b6c0800000000000000
+      internalID: -4127049153069956221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_17
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 280
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34d63a6109e448eb0800000000000000
+      internalID: -4718560128815370941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_18
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 280
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7c71f95db5de4d70800000000000000
+      internalID: 9029389312158956671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_19
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 280
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ca23c973c2e4e4a0800000000000000
+      internalID: -6564873027610006845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_20
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 280
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a83471a3412055ef0800000000000000
+      internalID: -120187529158245494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_21
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 280
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 489947149b16047e0800000000000000
+      internalID: -1783318004143711868
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_22
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 280
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9a40ef5002e8dbf0800000000000000
+      internalID: -299240883983725922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_23
+      rect:
+        serializedVersion: 2
+        x: 1407
+        y: 280
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d0d4c26ac1b8cee0800000000000000
+      internalID: -1240546214541995822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_24
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 140
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fda44af01e727af70800000000000000
+      internalID: 9198364611511077599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_25
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 140
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82c4f51cba8367d50800000000000000
+      internalID: 6734632603113966632
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_26
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 140
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e56e003c86ea20b0800000000000000
+      internalID: -5752532084236327454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_27
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 140
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f2322a3a917f53c0800000000000000
+      internalID: -4368648206311869704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_28
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 140
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c17d279cbcb85a2f0800000000000000
+      internalID: -962209237999364324
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_29
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 140
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1dc2203da9c4e0600800000000000000
+      internalID: 436370441750326481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_30
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 140
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc9292213587248e0800000000000000
+      internalID: -1710672610265060917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_31
+      rect:
+        serializedVersion: 2
+        x: 1407
+        y: 140
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28b712099c1b032d0800000000000000
+      internalID: -3300943047597917310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_abajo_32
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 201
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 832837404c14490f0800000000000000
+      internalID: -1111190897909595592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: de63089b362f24e4aafd2eda913651a6
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ataque_abajo_0: 6253080993554965479
+      ataque_abajo_1: 578437119749109853
+      ataque_abajo_10: 2553457338335020663
+      ataque_abajo_11: 2753405249061788903
+      ataque_abajo_12: 946950741217160136
+      ataque_abajo_13: -9032779003147566407
+      ataque_abajo_14: -386631472902417720
+      ataque_abajo_15: -2348997372903374504
+      ataque_abajo_16: -4127049153069956221
+      ataque_abajo_17: -4718560128815370941
+      ataque_abajo_18: 9029389312158956671
+      ataque_abajo_19: -6564873027610006845
+      ataque_abajo_2: -205369565699971492
+      ataque_abajo_20: -120187529158245494
+      ataque_abajo_21: -1783318004143711868
+      ataque_abajo_22: -299240883983725922
+      ataque_abajo_23: -1240546214541995822
+      ataque_abajo_24: 9198364611511077599
+      ataque_abajo_25: 6734632603113966632
+      ataque_abajo_26: -5752532084236327454
+      ataque_abajo_27: -4368648206311869704
+      ataque_abajo_28: -962209237999364324
+      ataque_abajo_29: 436370441750326481
+      ataque_abajo_3: -4617298540945284941
+      ataque_abajo_30: -1710672610265060917
+      ataque_abajo_31: -3300943047597917310
+      ataque_abajo_32: -1111190897909595592
+      ataque_abajo_4: -6450993360638713657
+      ataque_abajo_5: -2059202819137930792
+      ataque_abajo_6: -7003506219905010379
+      ataque_abajo_7: 7064188011181629728
+      ataque_abajo_8: -3449927532768990002
+      ataque_abajo_9: 110431466617081342
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

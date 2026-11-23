@@ -38,9 +38,12 @@ namespace EternalSleep.Dream
         [Tooltip("Escena vacía donde se construyen los sueños generados (únicos para cada jugador). Si no existe, se usan las Level_XX.")]
         [SerializeField] private string generatedSceneName = "Sueno";
 
+        [Tooltip("Probabilidad de que un aldeano normal sueñe con una Level_XX hecha a mano en vez de un sueño generado.")]
+        [SerializeField, Range(0f, 1f)] private float handmadeChance = 0.3f;
+
         [Header("Variaciones")]
         [Tooltip("Probabilidad de que cada enemigo siga en el sueño.")]
-        [SerializeField, Range(0f, 1f)] private float enemyKeepChance = 0.8f;
+        [SerializeField, Range(0f, 1f)] private float enemyKeepChance = 0.92f;
         [SerializeField] private int minEnemies = 2;
         [Tooltip("Cuántas plataformas extra (de las que se atraviesan desde abajo) intenta añadir.")]
         [SerializeField] private int extraPlatforms = 4;
@@ -48,6 +51,9 @@ namespace EternalSleep.Dream
 
         [Header("Transición")]
         [SerializeField] private float fadeTime = 0.6f;
+
+        /// <summary>Valor de dreamScene para un aldeano cuyo sueño siempre es una de las Level_XX.</summary>
+        public const string HandmadeDream = "@nivel";
 
         private static DreamWorldManager instance;
         private static readonly HashSet<string> awakened = new HashSet<string>();
@@ -187,11 +193,14 @@ namespace EternalSleep.Dream
         public void EnterDream(string dreamerId, string fixedScene, Vector2 returnAt, DreamAI.Request request = null)
         {
             if (transitioning) return;
-            bool generated = string.IsNullOrEmpty(fixedScene) && Application.CanStreamedLevelBeLoaded(generatedSceneName);
-            if (string.IsNullOrEmpty(fixedScene) && !generated)
+            bool wantsHandmade = fixedScene == HandmadeDream || (string.IsNullOrEmpty(fixedScene) && Random.value < handmadeChance);
+            if (fixedScene == HandmadeDream) fixedScene = "";
+            string scene = wantsHandmade ? PickRandomDream() : null; // null si no hay Level_XX: se cae al sueño generado
+            bool generated = scene == null && string.IsNullOrEmpty(fixedScene) && Application.CanStreamedLevelBeLoaded(generatedSceneName);
+            if (scene == null && string.IsNullOrEmpty(fixedScene) && !generated)
                 Debug.LogWarning($"[Eternal Sleep] Falta la escena \"{generatedSceneName}\" en Build Settings: se usa una Level_XX. " +
                                  "Usa Eternal Sleep > Construir niveles.");
-            string scene = generated ? generatedSceneName : string.IsNullOrEmpty(fixedScene) ? PickRandomDream() : fixedScene;
+            if (scene == null) scene = generated ? generatedSceneName : string.IsNullOrEmpty(fixedScene) ? PickRandomDream() : fixedScene;
             if (scene == null)
             {
                 Debug.LogError($"[Eternal Sleep] No hay escenas que empiecen por \"{dreamScenePrefix}\" en Build Settings.");

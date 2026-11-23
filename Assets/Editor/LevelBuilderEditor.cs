@@ -31,6 +31,7 @@ namespace EternalSleep.EditorTools
     ///   S  vigía que dispara  G  portal de salida   .  vacío
     ///   N  aldeano dormido (solo en Hub.txt): al hablarle entras en su sueño
     ///   B  velo de sombra (solo se cruza con el Paso de Sombra)   H  Corazón de Luna
+    ///   n  casa de un aldeano cuyo sueño es uno de los niveles Level_XX hechos a mano (se numeran después de las N)
     ///   J  sitio del jefe (Arena.txt): se crean los tres jefes, su barra de vida y el orbe de recompensa
     ///
     /// Hub.txt (el pueblo) se construye primero y queda justo después del menú en Build Settings.
@@ -203,6 +204,7 @@ namespace EternalSleep.EditorTools
             var secretCells = new List<Vector3Int>();
             var crackedCells = new List<Vector3Int>();
             GameObject portal = null;
+            var handmadeDreamers = new List<Vector2>();
             Vector2? bossSpot = null;
             Transform Village() => village != null ? village : (village = new GameObject("Pueblo").transform);
 
@@ -240,8 +242,9 @@ namespace EternalSleep.EditorTools
                     case 'J': bossSpot = feet; break;
                     case 'N':
                         if (villagers == null) villagers = new GameObject("Villagers").transform;
-                        CreateDreamer(villagers, art, new Vector2(x + 0.5f, y), ++villagerCount, height);
+                        CreateDreamer(villagers, art, new Vector2(x + 0.5f, y), ++villagerCount, height, false);
                         break;
+                    case 'n': handmadeDreamers.Add(new Vector2(x + 0.5f, y)); break;
                     case 'C':
                     case 'c':
                         CreateCollectible(Village(), art, new Vector2(x + 0.5f, y + 0.5f), $"lagrima_{x}_{y}", ch == 'c');
@@ -256,6 +259,13 @@ namespace EternalSleep.EditorTools
                     case '3': CreateUpgradePickup(Village(), art, new Vector2(x + 0.5f, y + 0.5f), Upgrade.ChargedAttack); break;
                     case '%': crackedCells.Add(cell); break;
                 }
+            }
+
+            // Las casas 'n' van después de todas las 'N', así los aldeanos de antes conservan su número (y su partida guardada).
+            foreach (var spot in handmadeDreamers)
+            {
+                if (villagers == null) villagers = new GameObject("Villagers").transform;
+                CreateDreamer(villagers, art, spot, ++villagerCount, height, true);
             }
 
             ExtendGroundPastEdges(ground, art.Ground, lines);
@@ -334,6 +344,7 @@ namespace EternalSleep.EditorTools
             }
 
             string bottom = lines[height - 1];
+            if (bottom.Length == 0) return;
             for (int x = -margin; x < bottom.Length + margin; x++)
             {
                 if (bottom[Mathf.Clamp(x, 0, bottom.Length - 1)] != '#') continue;
@@ -779,7 +790,7 @@ namespace EternalSleep.EditorTools
         /// al entrar, la pantalla se funde y apareces en el interior (una habitación aparte, encima del mapa),
         /// donde el aldeano duerme en su cama.
         /// </summary>
-        private static void CreateDreamer(Transform parent, Art art, Vector2 feet, int number, int mapHeight)
+        private static void CreateDreamer(Transform parent, Art art, Vector2 feet, int number, int mapHeight, bool handmadeDream)
         {
             var info = Villagers[(number - 1) % Villagers.Length];
             int variant = (number - 1) % VillagerVariants;
@@ -903,6 +914,7 @@ namespace EternalSleep.EditorTools
             var so = new SerializedObject(npc);
             so.FindProperty("dreamerId").stringValue = go.name;
             so.FindProperty("displayName").stringValue = info.Name;
+            if (handmadeDream) so.FindProperty("dreamScene").stringValue = DreamWorldManager.HandmadeDream;
             FillStrings(so.FindProperty("sleepingLines"), info.Sleeping);
             FillStrings(so.FindProperty("awakeLines"), info.Awake);
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -1031,6 +1043,51 @@ namespace EternalSleep.EditorTools
                 {
                     "Mil noches en el mismo sueño... y hoy terminó distinto.",
                     "Hay más durmientes ahí abajo, muchacho. El sueño eterno no descansa.",
+                },
+            },
+            new VillagerInfo
+            {
+                Name = "Ana, la pastelera",
+                Sleeping = new[]
+                {
+                    "...la masa no sube... se queda mirándome...",
+                    "Alguien se comió todos los dulces... y ahora vienen por mí...",
+                    "(Revuelve el aire con la mano, dormida.)",
+                },
+                Awake = new[]
+                {
+                    "Los dulces siguen en su sitio. Esta mañana los conté dos veces.",
+                    "Pasa cuando quieras, Kael. Siempre hay algo caliente.",
+                },
+            },
+            new VillagerInfo
+            {
+                Name = "Hugo, el cerrajero",
+                Sleeping = new[]
+                {
+                    "...todas las cerraduras se abren solas... y detrás no hay nada...",
+                    "Dejé la llave en algún lado... en algún sueño...",
+                    "(Tantea la manta como si buscara algo.)",
+                },
+                Awake = new[]
+                {
+                    "Encontré la llave. Estaba en el último bolsillo, como siempre.",
+                    "Si alguna puerta se te resiste, avísame.",
+                },
+            },
+            new VillagerInfo
+            {
+                Name = "Nora, la tejedora",
+                Sleeping = new[]
+                {
+                    "...el hilo no se acaba... y cada nudo es una puerta...",
+                    "Alguien tira del otro extremo... no sueltes...",
+                    "(Mueve los dedos como si tejiera.)",
+                },
+                Awake = new[]
+                {
+                    "Terminé la manta. Es para ti, aunque no la necesites.",
+                    "Hay un hilo que une todos los sueños del pueblo. Tú lo cuidas.",
                 },
             },
         };

@@ -1,0 +1,693 @@
+fileFormatVersion: 2
+guid: fa7ff4bba30a22c40bee2bb01008bc5e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -142857599342452685
+    second: ataque_arriba_0
+  - first:
+      213: 461803179249837676
+    second: ataque_arriba_1
+  - first:
+      213: 1180308039054337789
+    second: ataque_arriba_2
+  - first:
+      213: -6955820134707152508
+    second: ataque_arriba_3
+  - first:
+      213: -8023058659637906709
+    second: ataque_arriba_4
+  - first:
+      213: 7740935091378540614
+    second: ataque_arriba_5
+  - first:
+      213: 8173750522745738058
+    second: ataque_arriba_6
+  - first:
+      213: -1372659584798354527
+    second: ataque_arriba_7
+  - first:
+      213: 1727967530884600052
+    second: ataque_arriba_8
+  - first:
+      213: -1968658359148644375
+    second: ataque_arriba_9
+  - first:
+      213: 4645544078032501160
+    second: ataque_arriba_10
+  - first:
+      213: -6746361760819418081
+    second: ataque_arriba_11
+  - first:
+      213: -3102283237442862423
+    second: ataque_arriba_12
+  - first:
+      213: 6716138987141463075
+    second: ataque_arriba_13
+  - first:
+      213: 6606520298452734583
+    second: ataque_arriba_14
+  - first:
+      213: -7302316860493154602
+    second: ataque_arriba_15
+  - first:
+      213: 9029426084876858027
+    second: ataque_arriba_16
+  - first:
+      213: 3467953030119358647
+    second: ataque_arriba_17
+  - first:
+      213: -7545545519693738715
+    second: ataque_arriba_18
+  - first:
+      213: 6089176261394369915
+    second: ataque_arriba_19
+  - first:
+      213: -7976824502009810774
+    second: ataque_arriba_20
+  - first:
+      213: -8313855191551577951
+    second: ataque_arriba_21
+  - first:
+      213: 7717372539748568796
+    second: ataque_arriba_22
+  - first:
+      213: 4293091793328678558
+    second: ataque_arriba_23
+  - first:
+      213: 460308082282825480
+    second: ataque_arriba_24
+  - first:
+      213: -4638890894795605229
+    second: ataque_arriba_25
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 52
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ataque_arriba_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 400
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3306ab135c7740ef0800000000000000
+      internalID: -142857599342452685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_1
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 400
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6625577b87a86600800000000000000
+      internalID: 461803179249837676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_2
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 400
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df62f5178eb416010800000000000000
+      internalID: 1180308039054337789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_3
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 400
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4893545e076f77f90800000000000000
+      internalID: -6955820134707152508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_4
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 400
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be2392438ae58a090800000000000000
+      internalID: -8023058659637906709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_5
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 400
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64059fec3735d6b60800000000000000
+      internalID: 7740935091378540614
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_6
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 400
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a435ce64bcefe6170800000000000000
+      internalID: 8173750522745738058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_7
+      rect:
+        serializedVersion: 2
+        x: 1407
+        y: 400
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a31f8a516553fce0800000000000000
+      internalID: -1372659584798354527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 200
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f019cd6059faf710800000000000000
+      internalID: 1727967530884600052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_9
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 200
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e777da17abeda4e0800000000000000
+      internalID: -1968658359148644375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_10
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 200
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a9fb8fc9b9487040800000000000000
+      internalID: 4645544078032501160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_11
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 200
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1c6418e8bb1062a0800000000000000
+      internalID: -6746361760819418081
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_12
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 200
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a2c19705d972f4d0800000000000000
+      internalID: -3102283237442862423
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_13
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 200
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32cf7be33d4843d50800000000000000
+      internalID: 6716138987141463075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_14
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 200
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 772dea665331fab50800000000000000
+      internalID: 6606520298452734583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_15
+      rect:
+        serializedVersion: 2
+        x: 1407
+        y: 200
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d6b5f43185f8aa90800000000000000
+      internalID: -7302316860493154602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_16
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba23bba2f27fe4d70800000000000000
+      internalID: 9029426084876858027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_17
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 0
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b0010a28e4a02030800000000000000
+      internalID: 3467953030119358647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_18
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 0
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52d4d1ee356d84790800000000000000
+      internalID: -7545545519693738715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_19
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 0
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7d07234c89118450800000000000000
+      internalID: 6089176261394369915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ataque_arriba_20
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 0
+        width: 201
+        height: 200
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1848}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa0b212e060ac4190800000000000000
+      internalID: -7976824502009810774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 4c443047a1702fc47bbb7d4a37c0ab4a
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ataque_arriba_0: -142857599342452685
+      ataque_arriba_1: 461803179249837676
+      ataque_arriba_10: 4645544078032501160
+      ataque_arriba_11: -6746361760819418081
+      ataque_arriba_12: -3102283237442862423
+      ataque_arriba_13: 6716138987141463075
+      ataque_arriba_14: 6606520298452734583
+      ataque_arriba_15: -7302316860493154602
+      ataque_arriba_16: 9029426084876858027
+      ataque_arriba_17: 3467953030119358647
+      ataque_arriba_18: -7545545519693738715
+      ataque_arriba_19: 6089176261394369915
+      ataque_arriba_2: 1180308039054337789
+      ataque_arriba_20: -7976824502009810774
+      ataque_arriba_3: -6955820134707152508
+      ataque_arriba_4: -8023058659637906709
+      ataque_arriba_5: 7740935091378540614
+      ataque_arriba_6: 8173750522745738058
+      ataque_arriba_7: -1372659584798354527
+      ataque_arriba_8: 1727967530884600052
+      ataque_arriba_9: -1968658359148644375
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
