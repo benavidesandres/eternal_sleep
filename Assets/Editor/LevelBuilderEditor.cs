@@ -1060,6 +1060,21 @@ namespace EternalSleep.EditorTools
                     "Pasa cuando quieras, Kael. Siempre hay algo caliente.",
                 },
             },
+            new VillagerInfo
+            {
+                Name = "Hugo, el cerrajero",
+                Sleeping = new[]
+                {
+                    "...todas las cerraduras se abren solas... y detrás no hay nada...",
+                    "Dejé la llave en algún lado... en algún sueño...",
+                    "(Tantea la manta como si buscara algo.)",
+                },
+                Awake = new[]
+                {
+                    "Encontré la llave. Estaba en el último bolsillo, como siempre.",
+                    "Si alguna puerta se te resiste, avísame.",
+                },
+            },
         };
 
         /// <summary>Caja de diálogo (abajo de la pantalla) con nombre, texto, flecha y dos opciones.</summary>
