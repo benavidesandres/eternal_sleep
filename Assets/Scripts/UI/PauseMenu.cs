@@ -20,11 +20,11 @@ namespace EternalSleep.UI
     {
         private static readonly Color OptionColor = new Color(0.55f, 0.48f, 0.75f);
         private static readonly Color SelectedColor = new Color(1f, 0.89f, 0.54f);
-        private const string Resume = "Continuar", Options = "Opciones", Diary = "Diario de sueños", Stats = "Estadísticas", ToHub = "Volver al pueblo", ToMenu = "Menú principal";
+        private const string Resume = "Continuar", Options = "Opciones", Diary = "Diario de sueños", Stats = "Estadísticas", Trophies = "Logros", ToHub = "Volver al pueblo", ToMenu = "Menú principal";
         private const string Master = "General", Music = "Música", Sfx = "Efectos", Back = "Volver";
         private const string MainHelp = "W/S elegir - Espacio aceptar - Escape volver";
         private const string OptionsHelp = "W/S elegir - A/D cambiar - Escape volver";
-        private const int Rows = 7;
+        private const int Rows = 8;
 
         public static bool IsPaused { get; private set; }
 
@@ -181,7 +181,7 @@ namespace EternalSleep.UI
             if (inOptions) GameSettings.Save();
             inOptions = false;
             ClosePage();
-            var list = new List<string> { Resume, Options, Diary, Stats };
+            var list = new List<string> { Resume, Options, Diary, Stats, Trophies };
             if (DreamWorldManager.IsInDream) list.Add(ToHub);
             list.Add(ToMenu);
             ShowPage("PAUSA", MainHelp, list, select);
@@ -288,10 +288,11 @@ namespace EternalSleep.UI
             title = RuntimeUI.Text("Titulo", root.transform, 50f, 24f, new Color(0.85f, 0.8f, 1f), "PAUSA");
             title.characterSpacing = 8f;
             for (int i = 0; i < Rows; i++)
-                optionTexts.Add(RuntimeUI.Text("Opcion" + i, root.transform, 14f - i * 20f, 13f, OptionColor, ""));
+                optionTexts.Add(RuntimeUI.Text("Opcion" + i, root.transform, 20f - i * 19f, 13f, OptionColor, ""));
             help = RuntimeUI.Text("Ayuda", root.transform, -150f, 9f, new Color(0.55f, 0.48f, 0.75f, 0.8f), MainHelp);
             pages[Diary] = new DreamDiaryPanel(root.transform);
             pages[Stats] = new StatsPanel(root.transform);
+            pages[Trophies] = new AchievementsPanel(root.transform);
             root.SetActive(false);
         }
     }
