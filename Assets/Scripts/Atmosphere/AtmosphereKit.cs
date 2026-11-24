@@ -16,6 +16,7 @@ namespace EternalSleep.Atmosphere
             public Color mist;
             public float mistAmount;
             public int fireflies;
+            public float vignette;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -37,6 +38,14 @@ namespace EternalSleep.Atmosphere
 
         /// <summary>Colores por escena. Los sueños generados usan la luz de su receta.</summary>
         public static Mood MoodFor(string scene)
+        {
+            var mood = BaseMood(scene);
+            // En el pueblo, que es de día y de paso, el borde es más suave; en la arena del jefe, más cerrado.
+            mood.vignette = scene == "Hub" ? 0.3f : scene == "Arena" ? 0.62f : 0.5f;
+            return mood;
+        }
+
+        private static Mood BaseMood(string scene)
         {
             switch (scene)
             {
@@ -73,7 +82,7 @@ namespace EternalSleep.Atmosphere
         {
             var mood = AtmosphereKit.MoodFor(scene);
             gameObject.AddComponent<Fireflies>().Init(mood.firefly, mood.fireflies);
-            ScreenVignette.Create(transform, 0.5f);
+            ScreenVignette.Create(transform, mood.vignette);
             ZoneTitle.ShowFor(scene);
         }
     }
