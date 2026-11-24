@@ -31,6 +31,7 @@ namespace EternalSleep.Player
         private float nextGhost;
         private float nextWallDust;
         private bool wasCharging;
+        private float nextStep;
         private float peakFall; // la velocidad de caída más fuerte desde que dejó el suelo (negativa)
 
         private void Awake()
@@ -118,9 +119,18 @@ namespace EternalSleep.Player
         private void Update()
         {
             if (!motor.IsGrounded) peakFall = Mathf.Min(peakFall, motor.Velocity.y);
+            UpdateRunDust();
             UpdateWallDust();
             UpdateChargeGlow();
             UpdateGhosts();
+        }
+
+        // Pasos: una bocanada pequeña detrás de los pies cada pocas décimas mientras corre por el suelo.
+        private void UpdateRunDust()
+        {
+            if (!motor.IsGrounded || motor.IsDashing || Mathf.Abs(motor.Velocity.x) < 3f || Time.time < nextStep) return;
+            nextStep = Time.time + 0.16f;
+            HitFeedback.Dust(transform.position, -motor.FacingDirection, 2, groundDustColor, 1.4f, 0.07f);
         }
 
         private void UpdateWallDust()
