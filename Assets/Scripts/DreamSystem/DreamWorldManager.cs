@@ -78,6 +78,9 @@ namespace EternalSleep.Dream
         private string pendingWakeSpeaker;
         private bool showIntro;
 
+        /// <summary>¿Ya se vio el final (todos los aldeanos despiertos)?</summary>
+        public static bool EndingSeen => endingSeen;
+
         /// <summary>Cuántos aldeanos han despertado ya.</summary>
         public static int AwakenedCount => awakened.Count;
 
