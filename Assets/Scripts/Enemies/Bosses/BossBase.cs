@@ -169,10 +169,11 @@ namespace EternalSleep.Enemies
         /// <summary>Espera, más corto en la segunda fase.</summary>
         protected WaitForSeconds Wait(float seconds) => new WaitForSeconds(seconds / Speed);
 
-        /// <summary>Aviso de ataque: chispas de color y un pequeño temblor.</summary>
+        /// <summary>Aviso de ataque: chispas de color, un anillo que se cierra y un pequeño temblor.</summary>
         protected void Warn(Vector2 at, Color color)
         {
             HitFeedback.Burst(at, color, 10, 3.5f, 0.12f, -2f);
+            PickupFx.Warning(at, color);
             HitFeedback.Shake(0.06f, 0.15f);
         }
 

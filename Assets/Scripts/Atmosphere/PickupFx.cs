@@ -16,6 +16,14 @@ namespace EternalSleep.Atmosphere
             Spawn(RingSprite(), position, color, 0.2f, 3.6f, 0.85f, 0.12f, 0.8f);
         }
 
+        /// <summary>
+        /// Aviso de ataque: un anillo que se cierra hacia el punto del golpe, para leer el ataque a tiempo.
+        /// </summary>
+        public static void Warning(Vector2 position, Color color)
+        {
+            Spawn(RingSprite(), position, color, 3.4f, 0.5f, 0.35f, 0f, 0.95f);
+        }
+
         private static void Spawn(Sprite sprite, Vector2 position, Color color, float from, float to, float time, float delay, float alpha)
         {
             var go = new GameObject("EfectoRecoger");
