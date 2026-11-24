@@ -58,9 +58,24 @@ namespace EternalSleep.Atmosphere
         private void Update()
         {
             hurt = Mathf.Max(0f, hurt - Time.unscaledDeltaTime * 1.6f);
-            Color c = Color.Lerp(Shade, Blood, hurt);
-            c.a = Mathf.Clamp01(baseAlpha + hurt * 0.45f);
+            // Con un solo corazón (de dos o más) la pantalla late despacio, como un pulso: dos golpes y una pausa.
+            float beat = 0f;
+            if (player != null && !player.IsDead && player.Max >= 2 && player.Current == 1)
+            {
+                float phase = Mathf.Repeat(Time.unscaledTime * 0.9f, 1f);
+                beat = Mathf.Max(Thump(phase, 0.05f), Thump(phase, 0.22f) * 0.6f);
+            }
+
+            Color c = Color.Lerp(Shade, Blood, Mathf.Max(hurt, beat * 0.7f));
+            c.a = Mathf.Clamp01(baseAlpha + hurt * 0.45f + beat * 0.22f);
             image.color = c;
+        }
+
+        /// <summary>Un golpe del latido: sube rápido en "at" y se apaga en unos 0,15 del ciclo.</summary>
+        private static float Thump(float phase, float at)
+        {
+            float d = phase - at;
+            return d < 0f ? 0f : Mathf.Exp(-d * 22f);
         }
 
         private static Sprite gradient;
