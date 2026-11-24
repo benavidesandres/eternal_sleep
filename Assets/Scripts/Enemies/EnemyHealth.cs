@@ -63,6 +63,7 @@ namespace EternalSleep.Enemies
             }
 
             Current -= amount;
+            PlayStats.AddHitDealt();
             invulnerableUntil = Time.time + invulnerableTime;
             Flash(flashTime);
             Vector2 away = ((Vector2)transform.position - from).normalized;
