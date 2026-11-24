@@ -103,6 +103,7 @@ namespace EternalSleep.Player
         private bool Damage(int amount)
         {
             Current = Mathf.Max(0, Current - amount);
+            PlayStats.AddHitTaken();
             invulnerableUntil = Time.time + invulnerableTime;
             HealthChanged?.Invoke(Current, maxHealth);
 
