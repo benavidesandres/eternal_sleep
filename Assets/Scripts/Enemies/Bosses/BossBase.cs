@@ -85,6 +85,7 @@ namespace EternalSleep.Enemies
         private void OnDied()
         {
             StopAllCoroutines(); // desactivar el script no para las corrutinas
+            PlayStats.AddBossDefeated();
             // El golpe final: un instante de cámara lenta, un destello blanco y un buen temblor.
             HitFeedback.SlowMo(0.25f, 1.3f);
             ScreenFlash.Play(new Color(1f, 0.96f, 1f), 0.85f, 0.9f);
