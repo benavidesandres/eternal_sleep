@@ -27,6 +27,15 @@ namespace EternalSleep.Effects
         /// <param name="gravity">Negativo = suben (humo de sueño).</param>
         public static void Burst(Vector2 position, Color color, int count, float speed = 4f, float size = 0.12f, float gravity = 6f)
         {
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 velocity = Random.insideUnitCircle.normalized * (speed * Random.Range(0.4f, 1f)) + Vector2.up * speed * 0.3f;
+                SpawnShard(position + Random.insideUnitCircle * 0.2f, color, size, velocity, gravity, Random.Range(0.35f, 0.7f));
+            }
+        }
+
+        private static void SpawnShard(Vector2 position, Color color, float size, Vector2 velocity, float gravity, float life)
+        {
             if (pixel == null)
             {
                 var tex = new Texture2D(1, 1) { filterMode = FilterMode.Point };
@@ -35,22 +44,19 @@ namespace EternalSleep.Effects
                 pixel = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
             }
 
-            for (int i = 0; i < count; i++)
-            {
-                var go = new GameObject("Fragmento");
-                go.transform.position = position + Random.insideUnitCircle * 0.2f;
-                float s = size * Random.Range(0.6f, 1.3f);
-                go.transform.localScale = new Vector3(s, s, 1f);
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = pixel;
-                sr.color = Color.Lerp(color, Color.white, Random.Range(0f, 0.35f));
-                sr.sortingOrder = 30;
+            var go = new GameObject("Fragmento");
+            go.transform.position = position;
+            float s = size * Random.Range(0.6f, 1.3f);
+            go.transform.localScale = new Vector3(s, s, 1f);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = pixel;
+            sr.color = Color.Lerp(color, Color.white, Random.Range(0f, 0.35f));
+            sr.sortingOrder = 30;
 
-                var shard = go.AddComponent<Shard>();
-                shard.velocity = Random.insideUnitCircle.normalized * (speed * Random.Range(0.4f, 1f)) + Vector2.up * speed * 0.3f;
-                shard.gravity = gravity;
-                shard.life = Random.Range(0.35f, 0.7f);
-            }
+            var shard = go.AddComponent<Shard>();
+            shard.velocity = velocity;
+            shard.gravity = gravity;
+            shard.life = life;
         }
 
         private class Shard : MonoBehaviour
