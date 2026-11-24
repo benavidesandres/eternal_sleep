@@ -135,7 +135,11 @@ namespace EternalSleep.UI
                 "<color=#FFE38A>Tu partida</color>\n\n" +
                 $"Lágrimas de Luna: {CollectibleTracker.Count} / {CollectibleTracker.Total}\n" +
                 $"Secretos encontrados: {CollectibleTracker.SecretsFound}\n" +
-                $"Mejoras: {upgrades} / {kinds}\n\n\n" +
+                $"Mejoras: {upgrades} / {kinds}\n" +
+                $"Jefes vencidos: {PlayStats.BossesDefeated}\n" +
+                $"Golpes dados: {PlayStats.HitsDealt}\n" +
+                $"Veces que caíste: {PlayStats.Deaths}\n" +
+                $"Tiempo jugado: {PlayStats.FormatTime()}\n\n\n" +
                 "<color=#9E8FD1>Gracias por jugar.</color>\n\n" +
                 "<size=10><color=#7A6FA8>(Pulsa Continuar en el menú para seguir buscando lo que falta)</color></size>";
 
