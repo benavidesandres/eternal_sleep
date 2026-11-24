@@ -100,6 +100,7 @@ namespace EternalSleep.Enemies
             yield return new WaitForSeconds(introDelay);
 
             AudioManager.Play("rugido_jefe", 0f);
+            BossIntroCard.Show(displayName);
             yield return Roar(roarTime);
             if (BossHealthBar.Instance != null) BossHealthBar.Instance.Show(displayName, health);
 
