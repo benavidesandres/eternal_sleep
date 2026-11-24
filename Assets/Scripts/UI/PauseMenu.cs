@@ -24,7 +24,6 @@ namespace EternalSleep.UI
         private const string Master = "General", Music = "Música", Sfx = "Efectos", Back = "Volver";
         private const string MainHelp = "W/S elegir - Espacio aceptar - Escape volver";
         private const string OptionsHelp = "W/S elegir - A/D cambiar - Escape volver";
-        private const string DiaryHelp = "W/S desplazar - Escape volver";
         private const int Rows = 5;
 
         public static bool IsPaused { get; private set; }
@@ -35,8 +34,9 @@ namespace EternalSleep.UI
         private readonly List<TMP_Text> optionTexts = new List<TMP_Text>();
         private readonly List<string> labels = new List<string>();
         private bool inOptions;
-        private bool inDiary;
-        private DreamDiaryPanel diaryPanel;
+        private IPausePage page;     // página extra abierta (diario...), null si se ve el menú
+        private string pageLabel;
+        private readonly Dictionary<string, IPausePage> pages = new Dictionary<string, IPausePage>();
         private int selected;
         private float lastNav, lastAdjust;
         private PlayerInputReader pausedInput;
@@ -96,18 +96,18 @@ namespace EternalSleep.UI
 
             if (toggle.WasPressedThisFrame() || back.WasPressedThisFrame())
             {
-                if (inDiary) ShowMain(Diary);
+                if (page != null) ShowMain(pageLabel);
                 else if (inOptions) ShowMain(Options);
                 else Close(true);
                 return;
             }
 
             float nav = navigate.ReadValue<float>();
-            if (inDiary)
+            if (page != null)
             {
                 if (Mathf.Abs(nav) > 0.5f && Mathf.Abs(lastNav) <= 0.5f)
                 {
-                    diaryPanel.Scroll(nav > 0f ? -1 : 1);
+                    page.Scroll(nav > 0f ? -1 : 1);
                     AudioManager.Play("menu_mover");
                 }
                 lastNav = nav;
@@ -168,7 +168,7 @@ namespace EternalSleep.UI
         {
             if (inOptions) GameSettings.Save();
             inOptions = false;
-            inDiary = false;
+            ClosePage();
             IsPaused = false;
             if (root != null) root.SetActive(false);
             if (pausedInput != null) pausedInput.enabled = true;
@@ -180,23 +180,29 @@ namespace EternalSleep.UI
         {
             if (inOptions) GameSettings.Save();
             inOptions = false;
-            inDiary = false;
-            if (diaryPanel != null) diaryPanel.Hide();
+            ClosePage();
             var list = new List<string> { Resume, Options, Diary };
             if (DreamWorldManager.IsInDream) list.Add(ToHub);
             list.Add(ToMenu);
             ShowPage("PAUSA", MainHelp, list, select);
         }
 
-        private void ShowDiary()
+        private void OpenPage(string label)
         {
-            inDiary = true;
+            page = pages[label];
+            pageLabel = label;
             labels.Clear();
             foreach (var t in optionTexts) t.gameObject.SetActive(false);
             lastNav = 0f;
-            title.text = "DIARIO DE SUEÑOS";
-            help.text = DiaryHelp;
-            diaryPanel.Show();
+            title.text = page.Heading;
+            help.text = page.Help;
+            page.Show();
+        }
+
+        private void ClosePage()
+        {
+            if (page != null) page.Hide();
+            page = null;
         }
 
         private void ShowOptions()
@@ -223,13 +229,15 @@ namespace EternalSleep.UI
             {
                 case Resume: Close(true); break;
                 case Options: ShowOptions(); break;
-                case Diary: ShowDiary(); break;
                 case Back: ShowMain(Options); break;
                 case ToHub: Close(true); DreamWorldManager.Instance.AbortDream(); break;
                 case ToMenu:
                     Close(true);
                     DreamWorldManager.ClearDream();
                     SceneManager.LoadScene(0);
+                    break;
+                default:
+                    if (pages.ContainsKey(choice)) OpenPage(choice);
                     break;
             }
         }
@@ -282,7 +290,7 @@ namespace EternalSleep.UI
             for (int i = 0; i < Rows; i++)
                 optionTexts.Add(RuntimeUI.Text("Opcion" + i, root.transform, -2f - i * 22f, 13f, OptionColor, ""));
             help = RuntimeUI.Text("Ayuda", root.transform, -150f, 9f, new Color(0.55f, 0.48f, 0.75f, 0.8f), MainHelp);
-            diaryPanel = new DreamDiaryPanel(root.transform);
+            pages[Diary] = new DreamDiaryPanel(root.transform);
             root.SetActive(false);
         }
     }

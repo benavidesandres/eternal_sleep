@@ -9,7 +9,7 @@ namespace EternalSleep.UI
     /// Página del diario de sueños dentro de la pausa: lista los sueños completados con su título,
     /// el tema y quién los soñaba. Con más de una pantalla de sueños se desplaza con W/S.
     /// </summary>
-    public class DreamDiaryPanel
+    public class DreamDiaryPanel : IPausePage
     {
         private const int Visible = 5;
         private static readonly Color TitleColor = new Color(1f, 0.89f, 0.54f);
@@ -42,6 +42,9 @@ namespace EternalSleep.UI
             counter = RuntimeUI.Text("Contador", root.transform, -128f, 8f, Dim, "");
             root.SetActive(false);
         }
+
+        public string Heading => "DIARIO DE SUEÑOS";
+        public string Help => "W/S desplazar - Escape volver";
 
         public static int Count => DreamDiary.Entries.Count;
         public bool IsMoreBelow => offset + Visible < Count;
