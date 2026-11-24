@@ -51,6 +51,8 @@ Hecho con **Unity 6** (6000.6.6f1) y URP 2D.
 - Al morir aparece la pantalla de muerte: la máscara de Kael se parte y puedes **intentarlo de nuevo**,
   **volver al pueblo** (si estabas en un sueño) o ir al **menú principal**.
 - **Final:** al despertar al último aldeano, Vesna se despide y salen los créditos con tus Lágrimas, secretos y mejoras. Después puedes continuar la partida para buscar lo que falte.
+- **Pausa extra:** además de las opciones, la pausa tiene el **Diario de sueños** (los sueños que ya completaste),
+  las **Estadísticas** (tiempo, golpes, caídas, jefes) y los **Logros**, que se guardan con la partida.
 - **Guardado:** la partida se guarda sola al volver al pueblo y al recoger algo en él. En el menú, **Continuar** la retoma (dentro de un sueño no se guarda).
 - Tienes **3 corazones**. Los pinchos y las caídas quitan uno y te devuelven al último suelo seguro.
 - Si golpeas hacia abajo sobre un enemigo, rebotas.
