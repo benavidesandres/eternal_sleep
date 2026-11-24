@@ -1,3 +1,4 @@
+using EternalSleep.Player;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,9 +11,12 @@ namespace EternalSleep.Atmosphere
     public class ScreenVignette : MonoBehaviour
     {
         private static readonly Color Shade = new Color(0.03f, 0.02f, 0.07f);
+        private static readonly Color Blood = new Color(0.55f, 0.04f, 0.1f);
 
         private Image image;
         private float baseAlpha = 0.5f;
+        private float hurt; // 1 justo al recibir daño, baja a 0
+        private PlayerHealth player;
 
         public static ScreenVignette Create(Transform parent, float strength)
         {
@@ -36,6 +40,27 @@ namespace EternalSleep.Atmosphere
             v.baseAlpha = strength;
             v.image.color = new Color(Shade.r, Shade.g, Shade.b, strength);
             return v;
+        }
+
+        private void Start()
+        {
+            player = FindAnyObjectByType<PlayerHealth>();
+            if (player != null) player.Damaged += OnDamaged;
+        }
+
+        private void OnDestroy()
+        {
+            if (player != null) player.Damaged -= OnDamaged;
+        }
+
+        private void OnDamaged(Vector2 from) => hurt = 1f;
+
+        private void Update()
+        {
+            hurt = Mathf.Max(0f, hurt - Time.unscaledDeltaTime * 1.6f);
+            Color c = Color.Lerp(Shade, Blood, hurt);
+            c.a = Mathf.Clamp01(baseAlpha + hurt * 0.45f);
+            image.color = c;
         }
 
         private static Sprite gradient;
