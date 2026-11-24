@@ -43,6 +43,7 @@ namespace EternalSleep.Enemies
         protected SpriteRenderer sprite;
         private PlayerHealth player;
         private int lastAttack = -1;
+        private int hitsTakenAtStart;
 
         public string DisplayName => displayName;
         public EnemyHealth Health => health;
@@ -80,12 +81,17 @@ namespace EternalSleep.Enemies
             Arena = new Rect(b.xMin + 1f, b.yMin + 2f, b.width - 2f, b.height - 3f); // paredes, suelo y techo de 1 casilla
         }
 
-        private void Start() => StartCoroutine(Run());
+        private void Start()
+        {
+            hitsTakenAtStart = PlayStats.HitsTaken;
+            StartCoroutine(Run());
+        }
 
         private void OnDied()
         {
             StopAllCoroutines(); // desactivar el script no para las corrutinas
             PlayStats.AddBossDefeated();
+            if (PlayStats.HitsTaken == hitsTakenAtStart) Achievements.Unlock("jefe_limpio"); // no recibió ni un golpe en toda la pelea
             // El golpe final: un instante de cámara lenta, un destello blanco y un buen temblor.
             HitFeedback.SlowMo(0.25f, 1.3f);
             ScreenFlash.Play(new Color(1f, 0.96f, 1f), 0.85f, 0.9f);
