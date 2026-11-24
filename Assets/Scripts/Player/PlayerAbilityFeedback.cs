@@ -32,6 +32,7 @@ namespace EternalSleep.Player
         private float nextWallDust;
         private bool wasCharging;
         private float nextStep;
+        private int lastFacing = 1;
         private float peakFall; // la velocidad de caída más fuerte desde que dejó el suelo (negativa)
 
         private void Awake()
@@ -128,6 +129,13 @@ namespace EternalSleep.Player
         // Pasos: una bocanada pequeña detrás de los pies cada pocas décimas mientras corre por el suelo.
         private void UpdateRunDust()
         {
+            // Derrape: cambia de dirección todavía yendo rápido hacia el otro lado.
+            int facing = motor.FacingDirection;
+            float vx = motor.Velocity.x;
+            if (facing != lastFacing && motor.IsGrounded && Mathf.Abs(vx) > 4f && Mathf.Sign(vx) != facing)
+                HitFeedback.Dust(transform.position, (int)Mathf.Sign(vx), 6, groundDustColor, 2.6f);
+            lastFacing = facing;
+
             if (!motor.IsGrounded || motor.IsDashing || Mathf.Abs(motor.Velocity.x) < 3f || Time.time < nextStep) return;
             nextStep = Time.time + 0.16f;
             HitFeedback.Dust(transform.position, -motor.FacingDirection, 2, groundDustColor, 1.4f, 0.07f);
