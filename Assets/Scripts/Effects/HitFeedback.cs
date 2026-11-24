@@ -15,6 +15,9 @@ namespace EternalSleep.Effects
 
         public static void HitStop(float seconds) => Runner.Get().Stop(seconds);
 
+        /// <summary>Cámara lenta: el juego va a "scale" de su velocidad durante "seconds" segundos reales.</summary>
+        public static void SlowMo(float scale, float seconds) => Runner.Get().Slow(scale, seconds);
+
         public static void Shake(float amount, float seconds)
         {
             var cam = Camera.main != null ? Camera.main.GetComponent<CameraFollow2D>() : null;
@@ -111,6 +114,9 @@ namespace EternalSleep.Effects
             private static Runner instance;
             private float stopUntil;
             private bool stopped;
+            private float slowUntil;
+            private float slowScale = 1f;
+            private bool slowing;
 
             public static Runner Get()
             {
@@ -131,12 +137,26 @@ namespace EternalSleep.Effects
                 Time.timeScale = 0f;
             }
 
+            public void Slow(float scale, float seconds)
+            {
+                if (stopped || Time.timeScale == 0f) return; // en pausa o congelado: no se mezcla
+                slowScale = Mathf.Clamp(scale, 0.05f, 1f);
+                slowUntil = Time.unscaledTime + seconds;
+                slowing = true;
+                Time.timeScale = slowScale;
+            }
+
             private void Update()
             {
                 if (stopped && Time.unscaledTime >= stopUntil)
                 {
                     stopped = false;
-                    Time.timeScale = 1f;
+                    Time.timeScale = slowing ? slowScale : 1f; // si había cámara lenta, vuelve a ella
+                }
+                if (slowing && !stopped && Time.unscaledTime >= slowUntil)
+                {
+                    slowing = false;
+                    if (Mathf.Approximately(Time.timeScale, slowScale)) Time.timeScale = 1f; // si el juego está en pausa, no lo toca
                 }
             }
         }
