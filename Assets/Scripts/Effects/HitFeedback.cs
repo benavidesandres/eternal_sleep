@@ -34,6 +34,20 @@ namespace EternalSleep.Effects
             }
         }
 
+        /// <summary>
+        /// Polvo del suelo: bocanadas bajas que salen hacia los lados y se elevan un poco.
+        /// direction 0 = para los dos lados; 1 o -1 = hacia ese lado.
+        /// </summary>
+        public static void Dust(Vector2 feet, int direction, int count, Color color, float speed = 2.5f, float size = 0.09f)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                float side = direction != 0 ? direction : (Random.value < 0.5f ? -1f : 1f);
+                var velocity = new Vector2(side * speed * Random.Range(0.25f, 1f), Random.Range(0.3f, 1.1f));
+                SpawnShard(feet + new Vector2(Random.Range(-0.15f, 0.15f), 0.05f), color, size, velocity, -0.5f, Random.Range(0.25f, 0.5f));
+            }
+        }
+
         private static void SpawnShard(Vector2 position, Color color, float size, Vector2 velocity, float gravity, float life)
         {
             if (pixel == null)
