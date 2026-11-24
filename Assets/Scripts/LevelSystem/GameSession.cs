@@ -45,6 +45,7 @@ namespace EternalSleep
             TalkingNPC.ResetTalks();
             DialogueBox.ResetTimers();
             PlayerUpgrades.Reset();
+            PlayStats.Reset();
         }
     }
 }

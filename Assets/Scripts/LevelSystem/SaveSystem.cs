@@ -25,6 +25,11 @@ namespace EternalSleep
         public List<string> diarioTitulos = new List<string>();
         public List<string> diarioTemas = new List<string>();
         public List<string> diarioAldeanos = new List<string>();
+        public int estMuertes;
+        public int estGolpes;
+        public int estRecibidos;
+        public int estJefes;
+        public float estSegundos;
     }
 
     /// <summary>
@@ -44,6 +49,7 @@ namespace EternalSleep
             DreamWorldManager.WriteTo(data);
             PlayerUpgrades.WriteTo(data);
             CollectibleTracker.WriteTo(data);
+            PlayStats.WriteTo(data);
             try { File.WriteAllText(FilePath, JsonUtility.ToJson(data, true)); }
             catch (IOException e) { Debug.LogWarning("[Eternal Sleep] No se pudo guardar la partida: " + e.Message); }
         }
@@ -71,6 +77,7 @@ namespace EternalSleep
             DreamWorldManager.ReadFrom(data);
             PlayerUpgrades.ReadFrom(data);
             CollectibleTracker.ReadFrom(data);
+            PlayStats.ReadFrom(data);
             return true;
         }
 
