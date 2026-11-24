@@ -31,6 +31,7 @@ namespace EternalSleep.Player
         private float nextGhost;
         private float nextWallDust;
         private bool wasCharging;
+        private float peakFall; // la velocidad de caída más fuerte desde que dejó el suelo (negativa)
 
         private void Awake()
         {
@@ -42,6 +43,7 @@ namespace EternalSleep.Player
         private void OnEnable()
         {
             motor.Jumped += OnJumped;
+            motor.Landed += OnLanded;
             motor.AirJumped += OnAirJumped;
             motor.Dashed += OnDashed;
             motor.WallJumped += OnWallJumped;
@@ -55,6 +57,7 @@ namespace EternalSleep.Player
         private void OnDisable()
         {
             motor.Jumped -= OnJumped;
+            motor.Landed -= OnLanded;
             motor.AirJumped -= OnAirJumped;
             motor.Dashed -= OnDashed;
             motor.WallJumped -= OnWallJumped;
@@ -67,6 +70,15 @@ namespace EternalSleep.Player
 
         // Al despegar del suelo sale una bocanada a cada lado de los pies.
         private void OnJumped() => HitFeedback.Dust(transform.position, 0, 5, groundDustColor, 2.2f);
+
+        // Cuanto más fuerte la caída, más polvo. Los saltitos no levantan nada.
+        private void OnLanded()
+        {
+            float impact = -peakFall;
+            peakFall = 0f;
+            if (impact < 5f) return;
+            HitFeedback.Dust(transform.position, 0, Mathf.Clamp(Mathf.RoundToInt(impact * 0.7f), 4, 14), groundDustColor, 1.5f + impact * 0.15f);
+        }
 
         private void OnAirJumped() => HitFeedback.Burst(transform.position, dustColor, 12, 3.5f, 0.09f, 5f);
 
@@ -105,6 +117,7 @@ namespace EternalSleep.Player
 
         private void Update()
         {
+            if (!motor.IsGrounded) peakFall = Mathf.Min(peakFall, motor.Velocity.y);
             UpdateWallDust();
             UpdateChargeGlow();
             UpdateGhosts();
