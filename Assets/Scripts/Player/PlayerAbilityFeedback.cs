@@ -16,6 +16,9 @@ namespace EternalSleep.Player
         [SerializeField] private Color ghostColor = new Color(0.55f, 0.42f, 0.95f, 0.6f);
         [SerializeField] private Color dustColor = new Color(0.8f, 0.75f, 1f);
 
+        [Header("Polvo del suelo")]
+        [SerializeField] private Color groundDustColor = new Color(0.62f, 0.58f, 0.78f);
+
         [Header("Movimientos nuevos")]
         [SerializeField] private float wallDustInterval = 0.08f;
         [SerializeField] private Color slamColor = new Color(0.65f, 0.55f, 1f);
@@ -38,6 +41,7 @@ namespace EternalSleep.Player
 
         private void OnEnable()
         {
+            motor.Jumped += OnJumped;
             motor.AirJumped += OnAirJumped;
             motor.Dashed += OnDashed;
             motor.WallJumped += OnWallJumped;
@@ -50,6 +54,7 @@ namespace EternalSleep.Player
 
         private void OnDisable()
         {
+            motor.Jumped -= OnJumped;
             motor.AirJumped -= OnAirJumped;
             motor.Dashed -= OnDashed;
             motor.WallJumped -= OnWallJumped;
@@ -59,6 +64,9 @@ namespace EternalSleep.Player
             attack.ChargeReady -= OnChargeReady;
             attack.ChargedAttacked -= OnChargedAttacked;
         }
+
+        // Al despegar del suelo sale una bocanada a cada lado de los pies.
+        private void OnJumped() => HitFeedback.Dust(transform.position, 0, 5, groundDustColor, 2.2f);
 
         private void OnAirJumped() => HitFeedback.Burst(transform.position, dustColor, 12, 3.5f, 0.09f, 5f);
 
