@@ -62,7 +62,7 @@ namespace EternalSleep.UI
         }
 
         /// <summary>La fuente pixel del juego: se toma de cualquier texto de la escena (no está en Resources).</summary>
-        private static TMP_FontAsset PixelFont()
+        public static TMP_FontAsset PixelFont()
         {
             if (font != null) return font;
             var any = Object.FindAnyObjectByType<TMP_Text>(FindObjectsInactive.Include);

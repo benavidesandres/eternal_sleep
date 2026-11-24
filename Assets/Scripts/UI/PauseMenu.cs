@@ -20,11 +20,12 @@ namespace EternalSleep.UI
     {
         private static readonly Color OptionColor = new Color(0.55f, 0.48f, 0.75f);
         private static readonly Color SelectedColor = new Color(1f, 0.89f, 0.54f);
-        private const string Resume = "Continuar", Options = "Opciones", ToHub = "Volver al pueblo", ToMenu = "Menú principal";
+        private const string Resume = "Continuar", Options = "Opciones", Diary = "Diario de sueños", ToHub = "Volver al pueblo", ToMenu = "Menú principal";
         private const string Master = "General", Music = "Música", Sfx = "Efectos", Back = "Volver";
         private const string MainHelp = "W/S elegir - Espacio aceptar - Escape volver";
         private const string OptionsHelp = "W/S elegir - A/D cambiar - Escape volver";
-        private const int Rows = 4;
+        private const string DiaryHelp = "W/S desplazar - Escape volver";
+        private const int Rows = 5;
 
         public static bool IsPaused { get; private set; }
 
@@ -34,6 +35,8 @@ namespace EternalSleep.UI
         private readonly List<TMP_Text> optionTexts = new List<TMP_Text>();
         private readonly List<string> labels = new List<string>();
         private bool inOptions;
+        private bool inDiary;
+        private DreamDiaryPanel diaryPanel;
         private int selected;
         private float lastNav, lastAdjust;
         private PlayerInputReader pausedInput;
@@ -93,12 +96,23 @@ namespace EternalSleep.UI
 
             if (toggle.WasPressedThisFrame() || back.WasPressedThisFrame())
             {
-                if (inOptions) ShowMain(Options);
+                if (inDiary) ShowMain(Diary);
+                else if (inOptions) ShowMain(Options);
                 else Close(true);
                 return;
             }
 
             float nav = navigate.ReadValue<float>();
+            if (inDiary)
+            {
+                if (Mathf.Abs(nav) > 0.5f && Mathf.Abs(lastNav) <= 0.5f)
+                {
+                    diaryPanel.Scroll(nav > 0f ? -1 : 1);
+                    AudioManager.Play("menu_mover");
+                }
+                lastNav = nav;
+                return;
+            }
             if (Mathf.Abs(nav) > 0.5f && Mathf.Abs(lastNav) <= 0.5f)
             {
                 selected = (selected + (nav > 0f ? -1 : 1) + labels.Count) % labels.Count;
@@ -154,6 +168,7 @@ namespace EternalSleep.UI
         {
             if (inOptions) GameSettings.Save();
             inOptions = false;
+            inDiary = false;
             IsPaused = false;
             if (root != null) root.SetActive(false);
             if (pausedInput != null) pausedInput.enabled = true;
@@ -165,10 +180,23 @@ namespace EternalSleep.UI
         {
             if (inOptions) GameSettings.Save();
             inOptions = false;
-            var list = new List<string> { Resume, Options };
+            inDiary = false;
+            if (diaryPanel != null) diaryPanel.Hide();
+            var list = new List<string> { Resume, Options, Diary };
             if (DreamWorldManager.IsInDream) list.Add(ToHub);
             list.Add(ToMenu);
             ShowPage("PAUSA", MainHelp, list, select);
+        }
+
+        private void ShowDiary()
+        {
+            inDiary = true;
+            labels.Clear();
+            foreach (var t in optionTexts) t.gameObject.SetActive(false);
+            lastNav = 0f;
+            title.text = "DIARIO DE SUEÑOS";
+            help.text = DiaryHelp;
+            diaryPanel.Show();
         }
 
         private void ShowOptions()
@@ -195,6 +223,7 @@ namespace EternalSleep.UI
             {
                 case Resume: Close(true); break;
                 case Options: ShowOptions(); break;
+                case Diary: ShowDiary(); break;
                 case Back: ShowMain(Options); break;
                 case ToHub: Close(true); DreamWorldManager.Instance.AbortDream(); break;
                 case ToMenu:
@@ -253,6 +282,7 @@ namespace EternalSleep.UI
             for (int i = 0; i < Rows; i++)
                 optionTexts.Add(RuntimeUI.Text("Opcion" + i, root.transform, -2f - i * 22f, 13f, OptionColor, ""));
             help = RuntimeUI.Text("Ayuda", root.transform, -150f, 9f, new Color(0.55f, 0.48f, 0.75f, 0.8f), MainHelp);
+            diaryPanel = new DreamDiaryPanel(root.transform);
             root.SetActive(false);
         }
     }

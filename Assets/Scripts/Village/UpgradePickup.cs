@@ -1,3 +1,4 @@
+using EternalSleep.Atmosphere;
 using EternalSleep.Effects;
 using EternalSleep.Player;
 using EternalSleep.UI;
@@ -51,6 +52,7 @@ namespace EternalSleep.Village
             PlayerUpgrades.Claim(Id, upgrade);
             AudioManager.Play("mejora", 0f);
             HitFeedback.Burst(transform.position, burstColor, 18, 4f, 0.1f, -2f);
+            UpgradeBanner.Show(upgrade);
             if (DialogueBox.Instance != null)
                 DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(upgrade), null, null);
             gameObject.SetActive(false);

@@ -22,6 +22,9 @@ namespace EternalSleep
         public int corazonesExtra;
         public List<string> lagrimas = new List<string>();
         public List<string> secretos = new List<string>();
+        public List<string> diarioTitulos = new List<string>();
+        public List<string> diarioTemas = new List<string>();
+        public List<string> diarioAldeanos = new List<string>();
     }
 
     /// <summary>

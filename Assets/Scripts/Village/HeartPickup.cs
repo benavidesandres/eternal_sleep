@@ -1,3 +1,4 @@
+using EternalSleep.Atmosphere;
 using EternalSleep.Effects;
 using EternalSleep.Player;
 using EternalSleep.UI;
@@ -36,6 +37,7 @@ namespace EternalSleep.Village
             PlayerUpgrades.ClaimHeart(id);
             AudioManager.Play("corazon", 0f);
             HitFeedback.Burst(transform.position, new Color(1f, 0.55f, 0.7f), 18, 4f, 0.1f, -2f);
+            UpgradeBanner.Show(Upgrade.ExtraHeart);
             if (DialogueBox.Instance != null)
                 DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(Upgrade.ExtraHeart), null, null);
             gameObject.SetActive(false);

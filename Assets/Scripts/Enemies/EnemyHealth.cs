@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using EternalSleep.Atmosphere;
 using EternalSleep.Effects;
 using UnityEngine;
 
@@ -66,6 +67,7 @@ namespace EternalSleep.Enemies
             Flash(flashTime);
             Vector2 away = ((Vector2)transform.position - from).normalized;
             HitFeedback.Burst(Center, hitColor, 7, 5f);
+            DamageNumbers.Spawn(Center + Vector2.up * 0.5f, amount, IsDead);
             HitFeedback.HitStop(hitStop);
             HitFeedback.Shake(0.08f, 0.12f);
             AudioManager.Play(IsDead ? "muerte_enemigo" : "impacto_enemigo", 0.08f);

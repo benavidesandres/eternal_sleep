@@ -115,6 +115,9 @@ namespace EternalSleep.Dream
         public static bool IsInDream => instance != null && instance.currentDreamScene != null &&
                                         SceneManager.GetActiveScene().name == instance.currentDreamScene;
 
+        /// <summary>La receta del sueño en curso (null fuera de un sueño).</summary>
+        public static DreamRecipe CurrentRecipe => instance != null ? instance.currentRecipe : null;
+
         public static bool IsAwake(string dreamerId) => awakened.Contains(dreamerId);
 
         /// <summary>¿Hay un fundido de entrada o salida de un sueño en marcha?</summary>
@@ -134,6 +137,7 @@ namespace EternalSleep.Dream
         {
             awakened.Clear();
             wakeLines.Clear();
+            DreamDiary.Clear();
             endingSeen = false;
             ClearDream();
         }
@@ -141,6 +145,7 @@ namespace EternalSleep.Dream
         public static void WriteTo(SaveData data)
         {
             data.despiertos.AddRange(awakened);
+            DreamDiary.WriteTo(data);
             data.finalVisto = endingSeen;
             foreach (var pair in wakeLines)
             {
@@ -152,6 +157,7 @@ namespace EternalSleep.Dream
         public static void ReadFrom(SaveData data)
         {
             foreach (var id in data.despiertos) awakened.Add(id);
+            DreamDiary.ReadFrom(data);
             endingSeen = data.finalVisto;
             for (int i = 0; i < data.frasesId.Count && i < data.frasesTexto.Count; i++)
                 wakeLines[data.frasesId[i]] = data.frasesTexto[i];
@@ -237,6 +243,8 @@ namespace EternalSleep.Dream
             if (currentDreamer != null && awakened.Add(currentDreamer))
             {
                 if (PlayerUpgrades.GrantNextWakeReward(out var reward)) pendingReward = reward;
+                if (currentRecipe != null) DreamDiary.Add(currentRecipe.titulo, currentRecipe.tema, currentDreamerName);
+                else DreamDiary.Add(Atmosphere.ZoneTitle.NameOf(lastDreamScene), "", currentDreamerName);
                 if (currentRecipe != null && !string.IsNullOrEmpty(currentRecipe.despertar))
                 {
                     wakeLines[currentDreamer] = currentRecipe.despertar;
@@ -308,6 +316,7 @@ namespace EternalSleep.Dream
             {
                 if (!reward.HasValue) { CheckEnding(); return; }
                 Effects.AudioManager.Play("mejora", 0f);
+                Atmosphere.UpgradeBanner.Show(reward.Value);
                 DialogueBox.Instance.Show("Nueva mejora", PlayerUpgrades.Describe(reward.Value), null, __ => CheckEnding());
             }
             if (pendingWakeLine != null) DialogueBox.Instance.Show(pendingWakeSpeaker, new[] { pendingWakeLine }, null, ShowReward);
