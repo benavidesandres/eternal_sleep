@@ -73,6 +73,7 @@ namespace EternalSleep.Atmosphere
         {
             var mood = AtmosphereKit.MoodFor(scene);
             gameObject.AddComponent<Fireflies>().Init(mood.firefly, mood.fireflies);
+            ScreenVignette.Create(transform, 0.5f);
             ZoneTitle.ShowFor(scene);
         }
     }
