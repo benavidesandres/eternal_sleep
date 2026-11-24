@@ -13,8 +13,6 @@ namespace EternalSleep.Atmosphere
         public struct Mood
         {
             public Color firefly;
-            public Color mist;
-            public float mistAmount;
             public int fireflies;
             public float vignette;
         }
@@ -49,30 +47,28 @@ namespace EternalSleep.Atmosphere
         {
             switch (scene)
             {
-                case "Hub": return Make(new Color(1f, 0.85f, 0.45f), new Color(0.55f, 0.5f, 0.75f), 0.16f, 26);
-                case "Level_01": return Make(new Color(0.65f, 1f, 0.55f), new Color(0.5f, 0.7f, 0.55f), 0.16f, 30);
-                case "Level_02": return Make(new Color(0.55f, 1f, 0.8f), new Color(0.45f, 0.65f, 0.55f), 0.24f, 26);
-                case "Level_03": return Make(new Color(0.55f, 0.85f, 1f), new Color(0.4f, 0.5f, 0.7f), 0.18f, 22);
-                case "Level_04": return Make(new Color(0.8f, 0.65f, 1f), new Color(0.6f, 0.5f, 0.8f), 0.14f, 22);
-                case "Level_05": return Make(new Color(1f, 0.8f, 0.5f), new Color(0.7f, 0.6f, 0.5f), 0.12f, 20);
-                case "Level_06": return Make(new Color(1f, 0.85f, 0.5f), new Color(0.55f, 0.5f, 0.7f), 0.16f, 24);
-                case "Arena": return Make(new Color(0.85f, 0.6f, 1f), new Color(0.5f, 0.4f, 0.7f), 0.12f, 12);
+                case "Hub": return Make(new Color(1f, 0.85f, 0.45f), 26);
+                case "Level_01": return Make(new Color(0.65f, 1f, 0.55f), 30);
+                case "Level_02": return Make(new Color(0.55f, 1f, 0.8f), 26);
+                case "Level_03": return Make(new Color(0.55f, 0.85f, 1f), 22);
+                case "Level_04": return Make(new Color(0.8f, 0.65f, 1f), 22);
+                case "Level_05": return Make(new Color(1f, 0.8f, 0.5f), 20);
+                case "Level_06": return Make(new Color(1f, 0.85f, 0.5f), 24);
+                case "Arena": return Make(new Color(0.85f, 0.6f, 1f), 12);
                 case "Sueno": return FromRecipe();
-                default: return Make(new Color(0.8f, 0.75f, 1f), new Color(0.55f, 0.5f, 0.75f), 0.14f, 22);
+                default: return Make(new Color(0.8f, 0.75f, 1f), 22);
             }
         }
 
         private static Mood FromRecipe()
         {
             var r = DreamWorldManager.CurrentRecipe;
-            if (r == null) return Make(new Color(0.8f, 0.75f, 1f), new Color(0.55f, 0.5f, 0.75f), 0.14f, 22);
+            if (r == null) return Make(new Color(0.8f, 0.75f, 1f), 22);
             Color light = r.LightColor;
-            return Make(Color.Lerp(light, Color.white, 0.25f), Color.Lerp(light, new Color(0.4f, 0.4f, 0.6f), 0.4f),
-                        Mathf.Clamp(0.08f + r.niebla * 0.3f, 0.08f, 0.28f), 24);
+            return Make(Color.Lerp(light, Color.white, 0.25f), 24);
         }
 
-        private static Mood Make(Color firefly, Color mist, float mistAmount, int count) =>
-            new Mood { firefly = firefly, mist = mist, mistAmount = mistAmount, fireflies = count };
+        private static Mood Make(Color firefly, int count) => new Mood { firefly = firefly, fireflies = count };
     }
 
     /// <summary>Crea los efectos de la escena; todo se destruye al cambiar de escena.</summary>
