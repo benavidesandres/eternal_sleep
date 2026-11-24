@@ -54,6 +54,8 @@ namespace EternalSleep.Atmosphere
                 case "Level_04": return Make(new Color(0.8f, 0.65f, 1f), 22);
                 case "Level_05": return Make(new Color(1f, 0.8f, 0.5f), 20);
                 case "Level_06": return Make(new Color(1f, 0.85f, 0.5f), 24);
+                case "Level_07": return Make(new Color(0.5f, 0.95f, 0.95f), 24);
+                case "Level_08": return Make(new Color(0.75f, 0.55f, 1f), 20);
                 case "Arena": return Make(new Color(0.85f, 0.6f, 1f), 12);
                 case "Sueno": return FromRecipe();
                 default: return Make(new Color(0.8f, 0.75f, 1f), 22);
