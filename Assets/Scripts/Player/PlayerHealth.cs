@@ -109,6 +109,7 @@ namespace EternalSleep.Player
 
             if (Current > 0) return true;
 
+            PlayStats.AddDeath();
             motor.Teleport(transform.position); // se queda quieto
             motor.enabled = false;
             Died?.Invoke();
