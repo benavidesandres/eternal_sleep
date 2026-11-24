@@ -30,6 +30,7 @@ namespace EternalSleep
         public int estRecibidos;
         public int estJefes;
         public float estSegundos;
+        public List<string> logros = new List<string>();
     }
 
     /// <summary>
@@ -50,6 +51,7 @@ namespace EternalSleep
             PlayerUpgrades.WriteTo(data);
             CollectibleTracker.WriteTo(data);
             PlayStats.WriteTo(data);
+            Achievements.WriteTo(data);
             try { File.WriteAllText(FilePath, JsonUtility.ToJson(data, true)); }
             catch (IOException e) { Debug.LogWarning("[Eternal Sleep] No se pudo guardar la partida: " + e.Message); }
         }
@@ -78,6 +80,7 @@ namespace EternalSleep
             PlayerUpgrades.ReadFrom(data);
             CollectibleTracker.ReadFrom(data);
             PlayStats.ReadFrom(data);
+            Achievements.ReadFrom(data);
             return true;
         }
 

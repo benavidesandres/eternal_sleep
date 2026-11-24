@@ -46,6 +46,7 @@ namespace EternalSleep
             DialogueBox.ResetTimers();
             PlayerUpgrades.Reset();
             PlayStats.Reset();
+            Achievements.Reset();
         }
     }
 }
